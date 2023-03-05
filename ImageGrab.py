@@ -4,7 +4,7 @@ import numpy as np
 import time
 import os
 
-xyplot = np.load('XYPlotData.npy',allow_pickle=True).item()
+xyplot = np.load('.//data/ImagePlot.npy',allow_pickle=True).item()
 #从文件加载坐标
 
 print(xyplot)

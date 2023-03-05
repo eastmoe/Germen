@@ -1,4 +1,4 @@
-#获取截图坐标程序
+#获取截图坐标的程序
 import tkinter as tk
 import numpy as np
 #from tkinter import messagebox
@@ -69,7 +69,7 @@ def buttonRelease_1(event):
 def savexyplot(x1,y1,x2,y2):
     xyplot={"xstart":x1,"ystart":y1,"xend":x2,"yend":y2}
     print(xyplot)
-    np.save('XYPlotData.npy', xyplot)
+    np.save('.//data/ImagePlot.npy', xyplot)
 
 #退出程序
 def sys_out(even):
