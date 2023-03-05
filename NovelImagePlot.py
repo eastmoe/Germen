@@ -1,7 +1,10 @@
+#获取截图坐标程序
 import tkinter as tk
-#import pyautogui
 import numpy as np
+#from tkinter import messagebox
+#import pyautogui
 
+print('请选取小说的阅读页面，不需要包含边框，建议提高对比度以改善OCR文字识别效率。')
 
 #定义一个透明的窗口，让它的大小与屏幕一样
 root = tk.Tk()
