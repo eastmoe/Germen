@@ -1,7 +1,7 @@
 #获取模拟点击坐标的程序
 import tkinter as tk
 import numpy as np
-import pyautogui
+
 
 print('请选取小说的阅读页面的模拟点击目标。')
 
