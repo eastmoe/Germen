@@ -30,8 +30,11 @@
 ## 使用说明
 
 1. 请先安装Python，并添加到PATH（开发环境为Python 3.10）。
-2. 将下载好的压缩包解压（或者git clone），在项目根目录运行`pip install -r requirements.txt`。
-3. 在项目根目录运行`python MainProgram.py`。
+2. 将下载好的压缩包解压（或者git clone），在项目根目录运行`pip install -r requirements.txt`安装依赖。
+3. 运行`'pip install shapely pyclipper`安装PaddleOCR所需要的依赖。
+4. 运行`hub install chinese_ocr_db_crnn_server`安装PaddleOCR，可参考[官网说明](https://www.paddlepaddle.org.cn/hubdetail?name=chinese_ocr_db_crnn_server&en_category=TextRecognition)。
+5. 在项目根目录运行`python MainProgram.py`启动主程序。
+6. 按照流程执行操作。
 
 ## 小贴士
 
