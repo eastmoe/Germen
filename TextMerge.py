@@ -18,13 +18,13 @@ def GetFileList(file_path):
 
 #用于合并的函数，参数是OCR识别产生的TXT文件list，OCR输出路径，合并之后的整本小说文件路径
 def Merge(file_list,dir_path,novelfile):
-    pathExist1 = os.path.exists(dir_path)
-    pathExist2 = os.path.exists(novelfile)
-    if (pathExist1 == False):
+    PathExist1 = os.path.exists(dir_path)
+    PathExist2 = os.path.exists(novelfile)
+    if (PathExist1 == False):
         # 检查路径是否存在
         print('OCR输出路径错误，程序将退出。')
         return "Error"
-    if (pathExist2 == False):
+    if (PathExist2 == False):
         # 检查路径是否存在
         print('整本小说文件路径错误，程序将退出。')
         return "Error"
