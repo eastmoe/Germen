@@ -1,4 +1,4 @@
-#用于模拟点击的程序
+#模拟鼠标点击程序
 import numpy as np
 import pyautogui
 

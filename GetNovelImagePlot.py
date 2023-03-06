@@ -85,6 +85,3 @@ root.bind("<B1-Motion>", b1_Motion)# 鼠标左键移动->改变子窗口大小
 root.bind("<ButtonRelease-1>", buttonRelease_1) # 鼠标左键释放->记录最后光标的位置
 #root.bind("<Button-3>",button_3)   #鼠标右键点击->截屏并保存图片
 root.mainloop()
-
-
-

@@ -1,3 +1,4 @@
+#文本合并程序
 import os
 
 
@@ -21,7 +22,7 @@ def Merge(file_list,dir_path,novelfile):
     pathExist2 = os.path.exists(novelfile)
     if (pathExist1 == False):
         # 检查路径是否存在
-        print('OCR输出路径路径错误，程序将退出。')
+        print('OCR输出路径错误，程序将退出。')
         return "Error"
     if (pathExist2 == False):
         # 检查路径是否存在
