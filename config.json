@@ -1,0 +1,6 @@
+{
+  "PictureDir": "./NovelPictures/",
+  "OCROutPaDir": "./NovelOCRText/",
+  "MergeBookDir": "./MergeText/",
+  "FinalNovelDir": "./FinalBooks/"
+}
