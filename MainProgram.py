@@ -40,9 +40,9 @@ os.system('python GetNovelImagePlot.py')
 
 #获取模拟点击坐标
 print("接下来，程序将获取模拟点击坐标，确认后请按回车键，然后在你需要的地方点按鼠标左键。"
-      "\n推荐的点击位置在现在和未来的截屏中不会遮挡文字的位置。"
+      "\n确认设置的模拟点击位置在现在和未来的截屏中不会遮挡文字，否则可能造成OCR识别错误、缺字等。"
       "\n在程序运作时，请不要遮挡窗口，也尽量不要做拖拽操作，以免"
-      "\n模拟点击被覆盖。")
+      "\n模拟点击被用户操作覆盖。")
 input()
 #with open('GetClickPlot.py','r') as GetClickPlot:
     #exec(GetClickPlot.read())
