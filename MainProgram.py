@@ -36,7 +36,10 @@ input()
 os.system('python GetNovelImagePlot.py')
 
 #获取模拟点击坐标
-print("接下来，程序将获取模拟点击坐标，确认后请按回车键，然后在你需要的地方点按鼠标左键。")
+print("接下来，程序将获取模拟点击坐标，确认后请按回车键，然后在你需要的地方点按鼠标左键。"
+      "\n推荐的点击位置在现在和未来的截屏中不会遮挡文字的位置。"
+      "\n在程序运作时，请不要遮挡窗口，也尽量不要做拖拽操作，以免"
+      "\n模拟点击被覆盖。")
 input()
 #with open('GetClickPlot.py','r') as GetClickPlot:
     #exec(GetClickPlot.read())
@@ -65,7 +68,7 @@ def FindLatestFile(folder_path, file_type):
 import ImageGrab
 import PaddleOCR
 import Click
-print("确认上述配置正确，请按回车键执行采集任务。\n警告：该过程目前无法自动控制结束，请在抓取结束时按下两次C键以进入下一步。\n")
+print("确认上述配置正确，请按回车键执行采集任务。\n警告：该过程目前无法自动控制结束，请在抓取结束时按下C键以进入下一步。\n")
 input()
 while True:
     ImageGrab.GrabReadImage(PictureDir)
@@ -110,6 +113,6 @@ FormatReplace.AddSpaceForParagraphs(MergedFilePath,NovelFilePath)
 print("添加段落空格成功")
 FormatReplace.UpdateFormat(NovelFilePath)
 print("格式修改成功！\n最终生成的文件位于",NovelFilePath)
-print("\n感谢您的使用，请按任意键退出。\n")
-if keyboard.is_pressed():
+print("\n感谢您的使用，请按E键退出。\n")
+if keyboard.is_pressed("e"):
     print("退出")
