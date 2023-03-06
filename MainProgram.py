@@ -3,7 +3,7 @@ import json
 import keyboard
 import time
 import os
-
+import glob
 
 
 
@@ -48,22 +48,40 @@ os.system('python GetClickPlot.py')
 #Cycle_new=input()
 #if Cycle_new ==
 
+#函数，找出指定目录中修改日期最新的文件并返回文件名，参数是目录，文件类型
+def FindLatestFile(folder_path, file_type):
+  # 获取指定目录和文件类型的所有文件列表
+  files = glob.glob(folder_path + file_type)
+  # 如果文件列表不为空，按照修改日期排序并返回最新的文件名
+  if files:
+    return max(files, key=os.path.getmtime)
+  # 否则返回None
+  else:
+    return None
+
+
+
 #开始获取图片并进行OCR
 import ImageGrab
 import PaddleOCR
-print("确认上述配置正确，请按回车键执行采集任务。\n警告：该过程目前无法自动控制结束，请在抓取结束时按下两次回车键以进入下一步。\n")
+print("确认上述配置正确，请按回车键执行采集任务。\n警告：该过程目前无法自动控制结束，请在抓取结束时按下两次C键以进入下一步。\n")
 input()
 while True:
     ImageGrab.GrabReadImage(PictureDir)
     print("截取图像成功。\n")
-    PaddleOCR.OCR(PictureDir,OCROutPaDir)
+    # 使用函数寻找最新的截图，进行OCR操作。
+    LatestImage=FindLatestFile(PictureDir,"*.png")
+    #LatestImagePath=os.path.join(PictureDir,LatestImage)
+    print("当前截图：",LatestImage,"\n")
+    PaddleOCR.OCR(LatestImage,OCROutPaDir)
     start = time.time()
     # 执行一个Cycle秒的等待
+    Cycle=float(Cycle)
     while time.time() - start < Cycle:
-        if keyboard.is_pressed():
+        if keyboard.is_pressed("c"):
             break
         time.sleep(0.1)
-    if keyboard.is_pressed():
+    if keyboard.is_pressed("c"):
         break
 print("采集结束\n")
 

@@ -3,5 +3,5 @@
   "OCROutPaDir": "./NovelOCRText/",
   "MergeBookDir": "./MergeText/",
   "FinalNovelDir": "./FinalBooks/",
-  "Cycle": "250"
+  "Cycle": "30"
 }
