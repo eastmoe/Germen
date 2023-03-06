@@ -1,6 +1,6 @@
 #主程序
 import json
-import getkey
+import keyboard
 import time
 import os
 import ImageGrab
@@ -11,13 +11,13 @@ import FormatReplace
 #加载配置，返回各个函数所需的路径和周期
 def LoadConfig():
     print("加载配置文件.....")
-    with open("config.json") as f:
-        data = json.load(f)
-    PictureDir = data["PictureDir"]
-    OCROutPaDir = data["OCROutPaDir"]
-    MergeBookDir = data["MergeBookDir"]
-    FinalNovelDir = data["FinalNovelDir"]
-    Cycle = data["Cycle"]
+    with open("config.json") as config:
+        ConfigInfo = json.load(config)
+    PictureDir = ConfigInfo["PictureDir"]
+    OCROutPaDir = ConfigInfo["OCROutPaDir"]
+    MergeBookDir = ConfigInfo["MergeBookDir"]
+    FinalNovelDir = ConfigInfo["FinalNovelDir"]
+    Cycle = ConfigInfo["Cycle"]
     return PictureDir,OCROutPaDir,MergeBookDir,FinalNovelDir,Cycle
 
 PictureDir,OCROutPaDir,MergeBookDir,FinalNovelDir,Cycle=LoadConfig()
@@ -52,17 +52,13 @@ while True:
     ImageGrab.GrabReadImage(PictureDir)
     print("截取图像成功。\n")
     PaddleOCR.OCR(PictureDir,OCROutPaDir)
-    seconds=Cycle
-    #执行一个Cycle秒的等待
-    while seconds > 0:
-        print("等待",seconds,"秒后继续抓取。\n")
-        time.sleep(1)
-        seconds=seconds - 1
-        key = getkey.getkey()
-        if key == getkey.keys.ENTER:
+    start = time.time()
+    # 执行一个Cycle秒的等待
+    while time.time() - start < Cycle:
+        if keyboard.is_pressed():
             break
-    key = getkey.getkey()
-    if key == getkey.keys.ENTER:
+        time.sleep(0.1)
+    if keyboard.is_pressed():
         break
 print("采集结束\n")
 
@@ -88,5 +84,5 @@ print("添加段落空格成功")
 FormatReplace.UpdateFormat(NovelFilePath)
 print("格式修改成功！\n最终生成的文件位于",NovelFilePath)
 print("\n感谢您的使用，请按任意键退出。\n")
-key = getkey.getkey()
-print("退出")
+if keyboard.is_pressed():
+    print("退出")
