@@ -1,4 +1,5 @@
 {
+  "Comment":"截图保存文件夹：PictureDir,图片转文字输出文件夹：OCROutPaDir,文本合并目录：MergeBookDir,书籍最终输出文件夹：FinalNovelDir,抓取周期：Cycle",
   "PictureDir": "./NovelPictures/",
   "OCROutPaDir": "./NovelOCRText/",
   "MergeBookDir": "./MergeText/",
