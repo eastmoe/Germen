@@ -3,15 +3,15 @@ import json
 import keyboard
 import time
 import os
-import ImageGrab
-import PaddleOCR
-import TextMerge
-import FormatReplace
+
+
+
+
 
 #加载配置，返回各个函数所需的路径和周期
 def LoadConfig():
     print("加载配置文件.....")
-    with open("config.json") as config:
+    with open("config.json",encoding='gb18030') as config:
         ConfigInfo = json.load(config)
     PictureDir = ConfigInfo["PictureDir"]
     OCROutPaDir = ConfigInfo["OCROutPaDir"]
@@ -31,14 +31,17 @@ print("配置加载完成："
 #获取截图范围
 print("请打开安卓模拟器，并打开阅读app，转到阅读页面。\n确认后请按回车键，使用鼠标左键选择截图范围。")
 input()
-with open('GetNovelImagePlot.py','r') as GetNovelImagePlot:
-    exec(GetNovelImagePlot.read())
+#with open('GetNovelImagePlot.py','r') as GetNovelImagePlot:
+#exec("python GetNovelImagePlot.py")
+os.system('python GetNovelImagePlot.py')
 
 #获取模拟点击坐标
 print("接下来，程序将获取模拟点击坐标，确认后请按回车键，然后在你需要的地方点按鼠标左键。")
 input()
-with open('GetClickPlot.py','r') as GetClickPlot:
-    exec(GetClickPlot.read())
+#with open('GetClickPlot.py','r') as GetClickPlot:
+    #exec(GetClickPlot.read())
+#exec("python GetClickPlot.py")
+os.system('python GetClickPlot.py')
 
 #设置翻页/截图间隔
 #print("请输入翻页/截图间隔，单位为秒(s)，默认值为250。")
@@ -46,6 +49,8 @@ with open('GetClickPlot.py','r') as GetClickPlot:
 #if Cycle_new ==
 
 #开始获取图片并进行OCR
+import ImageGrab
+import PaddleOCR
 print("确认上述配置正确，请按回车键执行采集任务。\n警告：该过程目前无法自动控制结束，请在抓取结束时按下两次回车键以进入下一步。\n")
 input()
 while True:
@@ -63,6 +68,7 @@ while True:
 print("采集结束\n")
 
 #合并文本
+import TextMerge
 print("准备进行文本合并......")
 #利用时间命名合并之后的文件
 MergedFiletime = time.strftime('%Y-%m-%d-%H-%M-%S')
@@ -75,6 +81,7 @@ TextMerge.Merge(TextList,OCROutPaDir,MergedFilePath)
 print("合并成功。\n")
 
 #格式处理
+import FormatReplace
 #利用时间命名处理之后的文件
 NovelFiletime = time.strftime('%Y-%m-%d-%H-%M-%S')
 NovelFileName = str(NovelFiletime) + ".txt"

@@ -52,4 +52,4 @@ def TestFeature():
     ImageSaveDir="./NovelPictures/"
     GrabReadImage(ImageSaveDir)
     return 0
-TestFeature()
+#TestFeature()

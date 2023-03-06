@@ -52,4 +52,4 @@ def TestFeature():
     Merge(OCRTextList,OCROutpath,MergeBookPath)
     return 0
 
-TestFeature()
+#TestFeature()

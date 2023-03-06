@@ -82,4 +82,4 @@ def TestFeature():
     UpdateFormat(Novel)
     return 0
 
-TestFeature()
+#TestFeature()
