@@ -16,7 +16,7 @@ def GetFileList(file_path):
         # print(dir_list)
     return dir_list
 
-#用于合并的函数，参数是OCR识别产生的TXT文件list，OCR输出路径，合并之后的整本小说文件路径
+#用于合并的函数，参数是OCR识别产生的TXT文件list，OCR输出路径，合并之后未处理格式的整本小说文件路径
 def Merge(file_list,dir_path,novelfile):
     PathExist1 = os.path.exists(dir_path)
     PathExist2 = os.path.exists(novelfile)
@@ -47,9 +47,9 @@ def Merge(file_list,dir_path,novelfile):
 
 def TestFeature():
     OCROutpath="E:/个人文件/Documents/GITHUB/Germen/NovelOCRText"
-    BookPath="E:/个人文件/Documents/GITHUB/Germen/NovelBook/ExampleMergeBook.txt"
+    MergeBookPath="E:/个人文件/Documents/GITHUB/Germen/MergeText/ExampleMergeBook.txt"
     OCRTextList=GetFileList(OCROutpath)
-    Merge(OCRTextList,OCROutpath,BookPath)
+    Merge(OCRTextList,OCROutpath,MergeBookPath)
     return 0
 
 TestFeature()
