@@ -1,4 +1,4 @@
-#基于百度飞浆的OCR程序
+#基于百度飞浆的OCR程序使用WebAPI进行OCR(已弃用，因为效率太低且无法使用CPU加速方法或GPU运算。识别一副图需要90s(Ryzen R5 Pro 4650G))
 #https://www.paddlepaddle.org.cn/hubdetail?name=chinese_ocr_db_crnn_server&en_category=TextRecognition
 import requests
 import json
