@@ -2,9 +2,9 @@
 import os
 
 #定义函数，恢复段落前空格，参数为合并后的小说文本文件路径，最终输出的小说路径
-def AddSpaceForParagraphs(NovelBookFilePath,NovelPath):
+def AddSpaceForParagraphs(MergeTextFile,NovelPath):
     # 打开txt文件
-    novelfile = open(NovelBookFilePath, "r+")
+    novelfile = open(MergeTextFile, "r+")
 
     # 读取文件中的所有行，并存储在一个列表中
     lines = novelfile.readlines()
@@ -76,9 +76,10 @@ def UpdateFormat(NovelPath):
     return 0
 
 def TestFeature():
-    BookPath = "E:/个人文件/Desktop/临时文件/ExampleMergeBook.txt"
-    AddSpaceForParagraphs(BookPath)
-    UpdateFormat(BookPath)
+    MergeTextFile = "E:/个人文件/Desktop/临时文件/ExampleMergeBook.txt"
+    Novel="E:/个人文件/Documents/GITHUB/Germen/FinalBooks/example.txt"
+    AddSpaceForParagraphs(MergeTextFile,Novel)
+    UpdateFormat(Novel)
     return 0
 
 TestFeature()
