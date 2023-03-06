@@ -29,7 +29,10 @@ print("配置加载完成："
       "\n抓取周期：",Cycle," 秒\n")
 
 #获取截图范围
-print("请打开安卓模拟器，并打开阅读app，转到阅读页面。\n确认后请按回车键，使用鼠标左键选择截图范围。")
+print("请打开安卓模拟器，并打开阅读app，转到阅读页面。"
+      "\n推荐提高阅读界面的对比度，使用常规字体以获得更高的识别准确率。"
+      "\n推荐调整字体大小以提高获取文本的效率。"
+      "\n确认后请按回车键，使用鼠标左键选择截图范围。")
 input()
 #with open('GetNovelImagePlot.py','r') as GetNovelImagePlot:
 #exec("python GetNovelImagePlot.py")
