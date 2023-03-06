@@ -2,7 +2,7 @@ import os
 
 
 #用于文件按照修改时间顺序排序的函数，参数是OCR输出路径
-def get_file_list(file_path):
+def GetFileList(file_path):
     dir_list = os.listdir(file_path)
     if not dir_list:
         print("错误！配置的OCR输出目录无文本文件！")
@@ -17,8 +17,17 @@ def get_file_list(file_path):
 
 #用于合并的函数，参数是OCR识别产生的TXT文件list，OCR输出路径，合并之后的整本小说文件路径
 def Merge(file_list,dir_path,novelfile):
-    fullnovel=""
-    #空字符串存放文本数据
+    pathExist1 = os.path.exists(dir_path)
+    pathExist2 = os.path.exists(novelfile)
+    if (pathExist1 == False):
+        # 检查路径是否存在
+        print('OCR输出路径路径错误，程序将退出。')
+        return "Error"
+    if (pathExist2 == False):
+        # 检查路径是否存在
+        print('整本小说文件路径错误，程序将退出。')
+        return "Error"
+
     novel=open(novelfile,"w")
     #打开整本小说文件
     for file in file_list:
@@ -35,11 +44,11 @@ def Merge(file_list,dir_path,novelfile):
     print("合并成功！文件位于",novelfile)
     return 0
 
-def main():
+def TestFeature():
     OCROutpath="E:/个人文件/Documents/GITHUB/Germen/NovelOCRText"
     BookPath="E:/个人文件/Documents/GITHUB/Germen/NovelBook/ExampleMergeBook.txt"
-    OCRTextList=get_file_list(OCROutpath)
+    OCRTextList=GetFileList(OCROutpath)
     Merge(OCRTextList,OCROutpath,BookPath)
     return 0
 
-main()
+TestFeature()

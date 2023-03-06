@@ -7,6 +7,17 @@ import time
 def OCR(PicturePath,OCROutPath):
 #定义OCR函数，参数是图片文件路径和OCR文本输出路径
 #注意，图片文件路径不支持中文
+    pathExist1=os.path.exists(PicturePath)
+    pathExist2= os.path.exists(OCROutPath)
+    if (pathExist1  == False):
+    #检查路径是否存在
+        print('图片文件路径路径错误，程序将退出。')
+        return "Error"
+    if (pathExist2  == False):
+    #检查路径是否存在
+        print('OCR文本输出路径错误，程序将退出。')
+        return "Error"
+
     print("本次图片转文字开始时间：",datetime.datetime.now(),"\n")
 
     # 图片OCR
@@ -73,14 +84,15 @@ def OCR(PicturePath,OCROutPath):
 
     return 0
 
-def main():
+def TestFeature():
     #Image='E:/个人文件/Documents/GITHUB/Germen/NovelPictures/sample.png'
     Image='./NovelPictures/sample.png'
+    #Image=""
     OCROutDir='E:/个人文件/Documents/GITHUB/Germen/NovelOCRText'
     OCR(Image,OCROutDir)
     return 0
 
-main()
+TestFeature()
 
 
 
