@@ -7,7 +7,6 @@ import glob
 
 
 
-
 #函数，加载配置，返回各个函数所需的路径和周期
 def LoadConfig():
     print("加载配置文件.....")
@@ -49,22 +48,23 @@ input()
 #执行Python程序，获取截图区域
 os.system('python GetNovelImagePlot.py')
 
-#获取模拟点击坐标
-print("接下来，程序将获取模拟点击坐标，确认后请按回车键，然后在你需要的地方点按鼠标左键。"
-      "\n确认设置的模拟点击位置在现在和未来的截屏中不会遮挡文字，否则可能造成OCR识别错误、缺字等。"
-      "\n在程序运作时，请不要遮挡窗口，也尽量不要做拖拽操作，以免"
-      "\n模拟点击被用户操作覆盖。")
-input()
+#获取翻页方式
+PageMethod=input("请输入操控翻页的方式，1为由本程序控制模拟点击，2为模拟按键，再由模拟器通过设置的键鼠模拟点击翻页"
+                 "(注意，部分模拟器在非管理员模式下的点击有可能无效)：")
 
-#执行Python程序，获取点击位置
-os.system('python GetClickPlot.py')
-
-#设置翻页/截图间隔
-#print("请输入翻页/截图间隔，单位为秒(s)，默认值为250。")
-#Cycle_new=input()
-#if Cycle_new ==
-
-
+if PageMethod == "1":
+    # 获取模拟点击坐标
+    print("接下来，程序将获取模拟点击坐标，确认后请按回车键，然后在你需要的地方点按鼠标左键。"
+          "\n确认设置的模拟点击位置在现在和未来的截屏中不会遮挡文字，否则可能造成OCR识别错误、缺字等。"
+          "\n在程序运作时，请不要遮挡窗口，也尽量不要做拖拽操作，以免"
+          "\n模拟点击被用户操作覆盖。")
+    input()
+    # 执行Python程序，获取点击位置
+    os.system('python GetClickPlot.py')
+else:
+    import PressKeyboard
+    #获取用户设置的按键
+    UserSettingKey=PressKeyboard.GetKey()
 
 
 
@@ -85,8 +85,12 @@ while True:
     print("当前截图：",LatestImage,"\n")
     #执行OCR操作
     PaddleOCR.OCR(LatestImage,OCROutPaDir)
-    #执行模拟点击操作
-    Click.ClickToNextPage()
+    if PageMethod=="1":
+        # 执行模拟点击操作
+        Click.ClickToNextPage()
+    else:
+        #使用keyboard.press_and_release()函数来模拟按键
+        keyboard.press_and_release(UserSettingKey)
     #记录时间以准备进行停顿
     start = time.time()
     # 执行一个Cycle秒的等待
@@ -114,7 +118,7 @@ TextList=TextMerge.GetFileList(OCROutPaDir)
 print(TextList)
 #对这些文件进行按时间顺序合并。
 TextMerge.Merge(TextList,OCROutPaDir,MergedFilePath)
-print("合并成功。\n")
+
 
 #格式处理
 import FormatReplace
@@ -128,7 +132,5 @@ print("添加段落空格成功")
 #执行格式整理
 FormatReplace.UpdateFormat(NovelFilePath)
 print("格式修改成功！\n最终生成的文件位于",NovelFilePath)
-print("\n感谢您的使用，请按E键退出。\n")
-#按E键退出
-if keyboard.is_pressed("e"):
-    print("退出")
+print("\n感谢您的使用。\n")
+
