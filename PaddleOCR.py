@@ -1,8 +1,8 @@
 #基于paddleOCR的本地API图片识别
-import paddlehub as hub
-import datetime
 import os
 import time
+import datetime
+import paddlehub as hub
 
 def OCR(PicturePath,OCROutPath):
 #定义OCR函数，参数是图片文件路径和OCR文本输出路径
@@ -92,7 +92,7 @@ def TestFeature():
     OCR(Image,OCROutDir)
     return 0
 
-#TestFeature()
+TestFeature()
 
 
 
