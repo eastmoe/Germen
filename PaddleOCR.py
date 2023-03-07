@@ -92,7 +92,7 @@ def TestFeature():
     OCR(Image,OCROutDir)
     return 0
 
-TestFeature()
+#TestFeature()
 
 
 
