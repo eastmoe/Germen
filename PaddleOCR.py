@@ -76,7 +76,8 @@ def OCR(PicturePath,OCROutPath):
     txtpath=os.path.join(OCROutPath,new_name)
 
     # 若文件不存在，则会自动创建，w表示文件以可写方式打开。
-    txtfile = open(txtpath, 'w')
+    # 使用UTF8编码打开，防止出现UnicodeEncodeError: 'gbk' codec can't encode character '\xb2'
+    txtfile = open(txtpath, 'w', encoding="utf-8")
     txtfile.write(text)
     txtfile.close()
 
