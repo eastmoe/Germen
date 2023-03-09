@@ -87,6 +87,8 @@ win32gui.SetWindowPos(AndroidWindowVM, win32con.HWND_TOPMOST,  0,0,0,0, win32con
 #   cx:以像素指定窗口的新的宽度。
 #   cy：以像素指定窗口的新的高度。
 print("置顶成功，开始采集。")
+#初始化页面计数器
+PageNumber=1
 while True:
     #执行截图操作
     ImageGrab.GrabReadImage(PictureDir)
@@ -115,6 +117,25 @@ while True:
     # 当按下C键退出循环，转到下一步
     if keyboard.is_pressed("c"):
         break
+
+    print("当前采集到 第",PageNumber,"页。\n")
+    #循环计数器+1
+    PageNumber=PageNumber+1
+    if PageNumber % 100 == 0:
+        import Memory
+        #显示内存占用情况
+        Memory.ShowMemoryUse()
+        print("\n暂停采集1分钟....按C键跳转到下一步。")
+        #当采集了100页之后，暂停一分钟
+        while time.time() - start < 60:
+            # 当按下C键退出循环，转到下一步
+            if keyboard.is_pressed("c"):
+                break
+            time.sleep(0.1)
+        # 当按下C键退出循环，转到下一步
+        if keyboard.is_pressed("c"):
+            break
+
 print("采集结束\n")
 
 #合并文本
