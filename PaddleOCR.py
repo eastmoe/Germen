@@ -29,6 +29,9 @@ def OCR(PicturePath,OCROutPath):
     # print("\n")
     # print(type(ocr_result))
     # print(ocr_result)
+    
+    # 删除ocr对象以缓解内存泄露
+    del ocr
 
     # 处理识别结果
     # OCR返回的结果是list，list里的元素是字典，字典里面的data元素是list，list里面是每一行的识别结果，是一个字典，字典里面的text对应的值才是每一行的内容。
