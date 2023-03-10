@@ -51,3 +51,4 @@
 6. 目前加入了按键模拟翻页，使用之前请在模拟器中设置好按键和点按位置。
 7. 如果你的模拟器使用了管理员权限运行，那么建议也使用管理员权限运行python执行本程序。
 8. 如果运行OCR过程中提示缺少cudnn文件，可以参考[这篇文章](https://blog.csdn.net/weixin_44906810/article/details/128176194#:~:text=%E6%89%93%E5%BC%80%E9%87%8C%E9%9D%A2%E7%A1%AE%E5%AE%9E%E6%B2%A1%E6%9C%89cudnn64_8.dll%E6%96%87%E4%BB%B6%E3%80%82,%E7%84%B6%E5%90%8E%E6%88%91%E4%BB%AC%E9%9C%80%E8%A6%81%E5%8E%BB%E4%B8%8B%E8%BD%BD%E7%9A%84cudnn%E5%8E%8B%E7%BC%A9%E5%8C%85%E9%87%8C%E9%9D%A2%E6%89%BE%E8%BF%99%E4%B8%AA%E6%96%87%E4%BB%B6%EF%BC%8C%E5%B0%86%E5%8E%8B%E7%BC%A9%E5%8C%85%E8%A7%A3%E5%8E%8B%E6%89%93%E5%BC%80%EF%BC%8C%E5%90%8C%E6%A0%B7%E4%BC%9A%E6%9C%89bin%E6%96%87%E4%BB%B6%EF%BC%8C%E6%89%93%E5%BC%80bin%EF%BC%8C%E9%87%8C%E9%9D%A2%E5%B0%B1%E6%9C%89%E6%88%91%E4%BB%AC%E6%89%80%E9%9C%80%E7%9A%84cudnn64_8.dll%E6%96%87%E4%BB%B6)来解决。
+9. 程序运行时会占用大量内存，请确保电脑可用内存大于10GB.
