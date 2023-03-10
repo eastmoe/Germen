@@ -49,7 +49,10 @@ def GrabReadImage(ImageSaveDir):
 
 
 def TestFeature():
-    ImageSaveDir="./NovelPictures/"
-    GrabReadImage(ImageSaveDir)
+    while True:
+        ImageSaveDir = "./temp/"
+        GrabReadImage(ImageSaveDir)
+        import Memory
+        Memory.ShowMemoryType()
     return 0
 #TestFeature()

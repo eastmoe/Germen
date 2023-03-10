@@ -16,3 +16,11 @@ def ClickToNextPage():
 
     return 0
 
+def TestFeature():
+    while True:
+        ClickToNextPage()
+        import Memory
+        Memory.ShowMemoryType()
+    return 0
+
+#TestFeature()

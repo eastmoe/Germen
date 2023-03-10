@@ -10,4 +10,8 @@ def GetKey():
     UserSettingKey = keyboard.parse_hotkey(key)
     return UserSettingKey
 
+def TestFeature():
+    while True:
+        GetKey()
+    return 0
 
