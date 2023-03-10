@@ -24,13 +24,13 @@ def Merge(file_list,dir_path,novelfile):
         print('OCR输出路径错误，程序将退出。')
         return "Error"
 
-    novel=open(novelfile,"w")
+    novel=open(novelfile,"w", encoding="utf-8")
     #打开整本小说文件
     for file in file_list:
     #遍历文件列表
         filepath=os.path.join(dir_path,file)
         #目录路径+当前文件名组成完整路径
-        nextText=open(filepath)
+        nextText=open(filepath, encoding="utf-8")
         #打开下一个文本
         novel.writelines(nextText)
         #将数据每次按行写入

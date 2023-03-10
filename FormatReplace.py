@@ -4,7 +4,7 @@ import os
 #定义函数，恢复段落前空格，参数为合并后的小说文本文件路径，最终输出的小说路径
 def AddSpaceForParagraphs(MergeTextFile,NovelPath):
     # 打开txt文件
-    novelfile = open(MergeTextFile, "r+")
+    novelfile = open(MergeTextFile, "r+", encoding="utf-8")
 
     # 读取文件中的所有行，并存储在一个列表中
     lines = novelfile.readlines()
@@ -30,7 +30,7 @@ def AddSpaceForParagraphs(MergeTextFile,NovelPath):
 
     # 关闭原始文件，并用新的列表覆盖它
     novelfile.close()
-    novelfile = open(NovelPath, "w")
+    novelfile = open(NovelPath, "w", encoding="utf-8")
     novelfile.writelines(new_lines)
     novelfile.close()
     return 0
@@ -47,7 +47,7 @@ def UpdateFormat(NovelPath):
         return "Error"
 
     # 打开txt文件
-    file = open(NovelPath, "r")
+    file = open(NovelPath, "r", encoding="utf-8")
     # 读取文件中的所有内容，并存储在一个字符串中
     text = file.read()
     # 关闭文件
@@ -69,7 +69,7 @@ def UpdateFormat(NovelPath):
     new_text = new_text.replace(OldStr2, NewStr2)
 
     # 重新打开文件，并用新的字符串覆盖它
-    file = open(NovelPath, "w")
+    file = open(NovelPath, "w", encoding="utf-8")
     file.write(new_text)
     file.close()
 
