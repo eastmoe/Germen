@@ -14,7 +14,7 @@
 
 *开发文本处理部分*（已完成）
 
-*正在开发主程序*（已完成）
+*开发主程序*（已完成）
 
 **调试程序与修复Bug**（进行中）
 
@@ -28,7 +28,12 @@
 
 
 ## 使用说明
+### 自动配置
+1. 请先安装Python，并添加到PATH（开发环境为Python 3.10）。
+2. 将下载好的Release压缩包解压（或者git clone），在项目根目录运行`Install.bat`安装依赖。
+3. 使用管理员权限运行`Start.bat`执行程序。
 
+### 手动配置
 1. 请先安装Python，并添加到PATH（开发环境为Python 3.10）。
 2. 将下载好的Release压缩包解压（或者git clone），在项目根目录运行`pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple some-package`安装依赖。
 3. 运行`pip install shapely pyclipper`安装PaddleOCR所需要的依赖。
