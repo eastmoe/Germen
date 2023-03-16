@@ -1,5 +1,6 @@
 # 图形用户程序，便于使用
 import json
+import os
 # 导入tkinter模块
 import tkinter as tk
 
@@ -29,6 +30,19 @@ def loadconfig():
     entryCycle.insert(0, Cycle)
     # return PictureDir,OCROutPaDir,MergeBookDir,FinalNovelDir,Cycle
 
+# 定义一个函数，用于读取复选框的状态，
+def getplotstate():
+    UseOldImagePlot = checkUseOldImagePlot.getvar()
+    UseOldClickPlot = checkUseOldClickPlot.getvar()
+
+# 定义函数，获取截图区域及点击坐标
+def getPicturePlot():
+    # 执行Python程序，获取截图区域
+    os.system('python GetNovelImagePlot.py')
+def getClickPlot():
+    # 执行Python程序，获取点击位置
+    os.system('python GetClickPlot.py')
+
 
 # 创建一个窗体对象
 root = tk.Tk()
@@ -37,7 +51,7 @@ root = tk.Tk()
 root.title("Germen GUI")
 
 # 设置窗体大小
-root.geometry("300x200")
+root.geometry("340x300")
 
 # 创建标签对象，显示文字
 label1 = tk.Label(root, text="截图保存文件夹：")
@@ -78,12 +92,6 @@ checkUseOldClickPlot.grid(row=7, column=0)
 
 
 
-# 定义一个函数，用于读取复选框的状态，
-def getplotstate():
-    UseOldImagePlot = checkUseOldImagePlot.getvar()
-    UseOldClickPlot = checkUseOldClickPlot.getvar()
-
-
 
 
 
@@ -95,12 +103,15 @@ def getplotstate():
 
 # 创建按钮对象，用于触发函数
 loadConfigjson = tk.Button(root, text="获取配置信息", command=loadconfig)
-
+RegetpicturePlot = tk.Button(root, text="重新获取", command=getPicturePlot)
+RegetclickPlot = tk.Button(root, text="重新获取", command=getClickPlot)
 
 # 将按钮放置在第五行的第一列和第二列之间（跨越两列）
 #loadConfigjson.grid(row=5, columnspan=2)
-#将按钮放置在第一行的第二列
+# 放置按钮
 loadConfigjson.grid(row=0, column=1)
+RegetpicturePlot.grid(row=6, column=1)
+RegetclickPlot.grid(row=7, column=1)
 
 # 运行窗体对象，等待事件的发生
 root.mainloop()

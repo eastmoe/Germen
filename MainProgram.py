@@ -45,7 +45,7 @@ print("请打开安卓模拟器，并打开阅读app，转到阅读页面。"
       "\n推荐调整字体大小以提高获取文本的效率。"
       "\n确认后请按回车键，使用鼠标左键选择截图范围。")
 input()
-#执行Python程序，获取截图区域
+# 执行Python程序，获取截图区域
 os.system('python GetNovelImagePlot.py')
 
 #获取翻页方式
