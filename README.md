@@ -21,6 +21,10 @@
 
 **开发GUI**（进行中）
 
+## 图形界面（开发中）
+
+![GermenGUIv1.PNG](https://s2.loli.net/2023/03/16/HvZ97gxJ6UyPR1j.png)
+
 ## 配置文件（config.json）说明
 
 1. PictureDir ：保存截图的路径
