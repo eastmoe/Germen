@@ -3,12 +3,28 @@ import json
 import glob
 import time
 import os
+import sys
+import win32com.shell.shell as shell
 # 导入tkinter模块
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import messagebox
 # 利用多线程完成操作
 import threading
+
+# 以管理员权限运行程序以确保可以对模拟器进行操作
+# 检查脚本是否以管理员权限运行
+if sys.argv[-1] != 'admin':
+    # 获取脚本的绝对路径
+    script = os.path.abspath(sys.argv[0])
+    # 将脚本路径和参数拼接成字符串
+    params = ' '.join([script] + sys.argv[1:] + ['admin'])
+    # 请求管理员权限
+    shell.ShellExecuteEx(lpVerb='runas', lpFile=sys.executable, lpParameters=params)
+    # 退出脚本
+    sys.exit(0)
+
+
 
 # 定义全局变量
 PictureDir = ""
@@ -34,6 +50,7 @@ def loadconfig():
     global OCROutPaDir
     global MergeBookDir
     global FinalNovelDir
+    global Cycle
     # 设置输入框的默认值
     PictureDir = ConfigInfo["PictureDir"]
     entryPictureDir.insert(0, PictureDir)
@@ -97,9 +114,6 @@ def CaptureBook():
     import PaddleOCR
     import Click
 
-    # 将进度条放置在窗体上
-    Processbar.place(x=100, y=50)
-
     PictureDir = entryPictureDir.get()
     OCROutPaDir = entryOCROutPaDir.get()
     Cycle = entryCycle.get()
@@ -110,8 +124,12 @@ def CaptureBook():
     UserSettingKey = entryKey.get()
     # 记录循环次数
     t = 1
-    Processbar.start()
-    while t < CycleTimes:
+    while t < CycleTimes+1:
+        # 计算当前进度占总进度的比例
+        proin = int((t / float(CycleTimes)) * 100)
+        # 每次循环调用step()方法，让进度条前进指定比例。
+        Processbar.step(proin)
+        print("当前进度：第", t, "张。")
         # 执行截图操作
         ImageGrab.GrabReadImage(PictureDir)
         print("截取图像成功。\n")
@@ -124,29 +142,26 @@ def CaptureBook():
         # 获取选择值
         value = pagemethod.get()
         if value in ["模拟点击"]:
-            # 执行模拟点击操作
             Click.ClickToNextPage()
         else:
             # 使用keyboard.press_and_release()函数来模拟按键
             keyboard.press_and_release(UserSettingKey)
+        t = t + 1
         # 记录时间以准备进行停顿
         start = time.time()
         # 执行一个Cycle秒的等待
         Cycle = float(Cycle)
         while time.time() - start < Cycle:
-            # 当按下C键退出循环，转到下一步
             # 如果stop_process为True，则跳出循环，并打印"停止运行"
             if stop_process:
                 print("停止运行")
                 break
             time.sleep(0.1)
-        # 当按下C键退出循环，转到下一步
         # 如果stop_mainfunction为True，则跳出循环，并打印"函数停止运行"
         if stop_process:
             print("函数停止运行")
             break
-        t = t+1
-    Processbar.stop()
+
 
 
 # 定义一个函数，用于创建并启动一个子线程来执行mainfunction函数
@@ -212,6 +227,8 @@ def FormatBook():
     # 利用时间命名处理之后的文件
     NovelFiletime = time.strftime('%Y-%m-%d-%H-%M-%S')
     NovelFileName = str(NovelFiletime) + ".txt"
+    # 将合成之后的文件路径声明为全局变量，方便引用
+    global NovelFilePath
     NovelFilePath = os.path.join(FinalNovelDir, NovelFileName)
     # 添加段落首部空格
     FormatReplace.AddSpaceForParagraphs(MergedFilePath, NovelFilePath)
@@ -230,7 +247,15 @@ def AutoProcess():
     startCaptureBook()
     MergeBook()
     FormatBook()
+    messagebox.showinfo(title="信息",message="格式修改成功！\n最终生成的文件位于{}".format(NovelFilePath))
 
+# 定义一键处理函数的子进程函数
+def StartTheardforALLprocess():
+    SinpleProcessThread = threading.Thread(target=AutoProcess())
+    # 设置子线程为守护线程（daemon），这样当主线程结束时，子线程也会自动结束
+    SinpleProcessThread.Daemon = True
+    # 启动子线程对象
+    SinpleProcessThread.start()
 
 # 定义一个函数，用于根据选择值显示额外的文本框和标签与按钮
 def show_extra(*args):
@@ -286,6 +311,8 @@ def ShowControlPanel():
     ClearOCR.grid(row=12, columnspan=2)
     Format.grid(row=12, column=1, sticky="E", padx=10, pady=10)
     SimpleProcess.grid(row=13, columnspan=2, sticky=tk.W+tk.E, padx=10, pady=10)
+    # 将进度条放置在窗体上
+    Processbar.place(x=10, y=545)
 
 
 # 创建一个窗体对象
@@ -295,7 +322,7 @@ root = tk.Tk()
 root.title("Germen GUI")
 
 # 设置窗体大小
-root.geometry("325x550")
+root.geometry("365x580")
 root.resizable(False, False)  # 设置窗口的宽度和高度都不可调整
 
 # 创建标签对象，显示文字
@@ -359,10 +386,12 @@ StopCapture = ttk.Button(root, text="结束采集", command=stoptCaptureBook)
 Merge = ttk.Button(root, text="合成书籍", command=MergeBook)
 ClearOCR = ttk.Button(root, text="清理OCR路径", command=DeleteOCRText)
 Format = ttk.Button(root, text="格式化书籍", command=FormatBook)
-SimpleProcess = ttk.Button(root, text="一键采集", command=AutoProcess)
+SimpleProcess = ttk.Button(root, text="一键采集", command=StartTheardforALLprocess)
 
 # 创建一个进度条，设置长度为200，模式为indeterminate（不确定的）
-Processbar = ttk.Progressbar(root, length=200, mode="indeterminate")
+Processbar = ttk.Progressbar(root,  orient="horizontal", length=340, mode="determinate")
+# 设置进度条为0
+#Processbar.stop()
 
 # 放置加载与修改按钮
 loadConfigjson.grid(row=0, column=1, sticky="W", padx=10, pady=10)
@@ -388,6 +417,9 @@ for col in range(col_count):
     root.grid_columnconfigure(col, minsize=20)  # 设置列间距为20像素
 for row in range(row_count):
     root.grid_rowconfigure(row, minsize=30)  # 设置行间距为20像素
+
+# 每隔200ms刷新窗体
+root.after(200)
 
 # 运行窗体对象，等待事件的发生
 root.mainloop()
