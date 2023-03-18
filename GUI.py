@@ -152,7 +152,7 @@ def CaptureBook():
 # 定义一个函数，用于创建并启动一个子线程来执行mainfunction函数
 def startCaptureBook():
     messagebox.showinfo(title="信息",
-                        message="请打开安卓模拟器，并打开阅读app，转到阅读页面。确认后请按回车键。注意，如果你需要重新采集或采集新书，请先清空OCR输出目录。")
+                        message="接下来将会开始采集，请打开安卓模拟器，并打开阅读app，转到阅读页面。确认后请按回车键。注意，如果你需要重新采集或采集新书，请先清空OCR输出目录。")
     # 使用global关键字声明全局变量，并将其设置为False（表示开始运行）
     global stop_process
     stop_process = False
@@ -223,6 +223,10 @@ def FormatBook():
 
 # 定义一键处理函数
 def AutoProcess():
+    if checkvar1.get() == 0:
+        getPicturePlot()
+    if checkvar2.get() == 0:
+        getClickPlot()
     startCaptureBook()
     MergeBook()
     FormatBook()
@@ -275,7 +279,7 @@ def ShowControlPanel():
     sep = ttk.Separator(root, orient='horizontal')
     # sep.grid(row=10 )
     # sep.pack(fill=x)
-    # 放置按钮
+    # 放置采集、取消、合并、清理、格式化、一键按钮
     StartCapture.grid(row=11, column=0, sticky="W", padx=10, pady=10)
     StopCapture.grid(row=11, column=1, sticky="E", padx=10, pady=10)
     Merge.grid(row=12, column=0, sticky="W", padx=10, pady=10)
@@ -334,14 +338,16 @@ entryTime.grid(row=6, column=1, sticky="E", padx=10, pady=10)
 # 设置采集页数(循环次数)输入框默认值
 entryTime.insert(0, "1000")
 
-# 创建一个IntVar对象，用于存储复选框的状态
-checkvar = tk.IntVar()
+# 创建两个个IntVar对象，用于存储是否重复选定区域复选框的状态
+checkvar1 = tk.IntVar()
+checkvar2 = tk.IntVar()
 # 设置初始值为1，表示默认选中
-checkvar.set(1)
+checkvar1.set(1)
+checkvar2.set(1)
 
 # 创建复选框对象
-checkUseOldImagePlot = ttk.Checkbutton(root, text="使用截图", variable=checkvar)
-checkUseOldClickPlot = ttk.Checkbutton(root, text="使用模拟点击", variable=checkvar)
+checkUseOldImagePlot = ttk.Checkbutton(root, text="使用上次保存的截图位置", variable=checkvar1)
+checkUseOldClickPlot = ttk.Checkbutton(root, text="使用上次保存的模拟点击位置", variable=checkvar2)
 
 # 创建按钮对象，用于触发函数
 loadConfigjson = ttk.Button(root, text="获取", command=loadconfig)
