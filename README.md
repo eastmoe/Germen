@@ -38,7 +38,7 @@
 
 
 1. 进入Python环境（推荐使用virtualenv或者conda为本项目设置一个专属虚拟环境）（开发环境为Python 3.10）。
-2. 将下载好的Release压缩包解压（或者git clone），在项目根目录运行`pip install -r requirements.txt `安装依赖。
+2. 将下载好的Release压缩包解压（或者git clone），在项目根目录运行`pip install -r requirements.txt -I  -i https://pypi.tuna.tsinghua.edu.cn/simple `安装依赖。
 3. 运行`python MainProgram.py`启动主程序。
 4. 按照流程执行操作。
 
