@@ -1,13 +1,8 @@
-#基于paddleOCR的本地图片识别
+#基于paddleOCR的本地API图片识别
 import os
 import time
 import datetime
-# 使用paddleocr模块而不是paddlehub里的ocrserver
-import paddleocr
-
-# 首次运行需要下载模型并加载入内存
-ocr_program = paddleocr.PaddleOCR(use_angle_cls=False, lang="ch")
-
+import paddlehub as hub
 
 def OCR(PicturePath,OCROutPath):
 #定义OCR函数，参数是图片文件路径和OCR文本输出路径
@@ -26,25 +21,42 @@ def OCR(PicturePath,OCROutPath):
     print("本次图片转文字开始时间：",datetime.datetime.now(),"\n")
 
     # 图片OCR
-    # 基于模块的ocr
-    ocr_result = ocr_program.ocr(PicturePath, cls=True)
+    ocr = hub.Module(name="chinese_ocr_db_crnn_server", enable_mkldnn=True)
+    # mkldnn加速仅在CPU下有效
+    # ocr_result = ocr.recognize_text( images=[cv2.imread('./NovelPictures/sample.png')])
+    #print(PicturePath)
+    ocr_result = ocr.recognize_text(paths=[PicturePath])
+    # print("\n")
+    # print(type(ocr_result))
+    # print(ocr_result)
+    
+    # 删除ocr对象以缓解内存泄露
+    del ocr
 
-
-    # 定义需要写入的文本为空字符串
+    # 处理识别结果
+    # OCR返回的结果是list，list里的元素是字典，字典里面的data元素是list，list里面是每一行的识别结果，是一个字典，字典里面的text对应的值才是每一行的内容。
     text = ""
-    # 将文本组合成以行相隔的字符串列表
-    result = ocr_result[0]
-    OCRTxtList = [line[1][0] for line in result]
-    #print(OCRTxtList)
-    # 初始的现在行数为1
-    currentLine = 1
-    # 计算总行数
-    lineNumber = len(OCRTxtList)
-
-    for elements in OCRTxtList:
-            # 将列表元素赋给当前行
-            line = elements
-            # 输出行内容
+    for item in ocr_result:
+    # 遍历list数组，得到其中的唯一一个字典元素
+        # print(item)
+        # print("\n")
+        # print(type(item))
+        # print("\n")
+        all_data = item.get('data')
+        # 提取这个字典元素的data值，为all_data list
+        lineNumber = len(all_data)
+        # 记录all_data list的长度，即文字的行数
+        currentLine = 1
+        # 初始的现在行数为1
+        # print(all_data)
+        # print("\n")
+        # print(type(all_data))
+        for elements in all_data:
+            # print("\n")
+            # print(type(elements))
+            line = elements.get('text')
+            # print(type(line))
+            # print("\n")
             print(line)
             if currentLine < lineNumber:
             # 当现在的行数小于总行数，就换行
@@ -80,7 +92,7 @@ def TestFeature():
     #Image='E:/个人文件/Documents/GITHUB/Germen/NovelPictures/sample.png'
     Image='./NovelPictures/sample.png'
     #Image=""
-    OCROutDir='C:/Users/XKW/Documents/GITHUB/Germen/NovelOCRText'
+    OCROutDir='E:/个人文件/Documents/GITHUB/Germen/NovelOCRText'
     OCR(Image,OCROutDir)
     return 0
 

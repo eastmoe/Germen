@@ -1,8 +1,13 @@
-keyboard==0.13.5
-numpy==1.24.2
-opencv_python==4.7.0.72
-paddlehub==2.3.1
-Pillow==9.4.0
-PyAutoGUI==0.9.53
-pywin32==305
-requests==2.28.2
+future~=1.0.0
+numpy~=1.24.2
+pyautogui~=0.9.53
+psutil~=5.9.8
+pillow~=10.2.0
+keyboard~=0.13.5
+click~=8.1.7
+pympler~=1.0.1
+requests~=2.28.2
+opencv-python~=4.6.0.66
+paddlepaddle~=2.6.0 -i https://pypi.tuna.tsinghua.edu.cn/simple
+paddlehub~=2.3.1 -i https://pypi.tuna.tsinghua.edu.cn/simple
+paddleocr~=2.7.0.3 -i https://pypi.tuna.tsinghua.edu.cn/simple
