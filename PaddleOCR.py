@@ -6,7 +6,10 @@ import datetime
 import paddleocr
 
 # 首次运行需要下载模型并加载入内存
-ocr_program = paddleocr.PaddleOCR(use_angle_cls=False, lang="ch")
+ocr_program = paddleocr.PaddleOCR(use_angle_cls=False, lang="ch",
+                                  # 模型下载：https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.7/doc/doc_ch/models_list.md
+                                  det_model_dir="models/ch_PP-OCRv4_det_server_infer",
+                                  rec_model_dir="models/ch_PP-OCRv4_rec_server_infer")
 
 
 def OCR(PicturePath,OCROutPath):
@@ -84,7 +87,7 @@ def TestFeature():
     OCR(Image,OCROutDir)
     return 0
 
-#TestFeature()
+TestFeature()
 
 
 
