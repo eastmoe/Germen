@@ -39,7 +39,9 @@
 
 1. 进入Python环境（推荐使用virtualenv或者conda为本项目设置一个专属虚拟环境）（开发环境为Python 3.10）。
 2. 将下载好的Release压缩包解压（或者git clone），在项目根目录运行`pip install -r requirements.txt -I  -i https://pypi.tuna.tsinghua.edu.cn/simple `安装依赖。
-3. 运行`python MainProgram.py`启动主程序。
+3. [下载](https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.7/doc/doc_ch/models_list.md)OCR推理模型（[ch_PP-OCRv4_det_server_infer](https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese/ch_PP-OCRv4_det_server_infer.tar)和[ch_PP-OCRv4_rec_server_infer](https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese/ch_PP-OCRv4_rec_server_infer.tar)），并解压后放入models文件夹中，形成下面的结构：
+    ![](C:\Users\XKW\Documents\GitHub\Germen\models.png)
+4. 运行`python MainProgram.py`启动主程序。
 4. 按照流程执行操作。
 
 
