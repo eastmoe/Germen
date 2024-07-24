@@ -21,7 +21,7 @@
 
 **开发GUI**（进行中）
 
-## 图形界面（已停止开发）
+## 窗口化图形界面（已停止开发）
 
 ![GermenGUIv1.PNG](https://s2.loli.net/2023/03/16/HvZ97gxJ6UyPR1j.png)
 
