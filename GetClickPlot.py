@@ -1,7 +1,13 @@
 #获取模拟点击坐标的程序
 import tkinter as tk
 import numpy as np
+import logging
 
+# 设置日志
+logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
+                    level=logging.DEBUG,
+                    filename='./log/click.log',
+                    filemode='a')
 
 print('请选取小说的阅读页面的模拟点击目标。')
 
@@ -17,9 +23,10 @@ root.configure(bg="black")
 def button_1(event):
     global x, y
     x, y = event.x, event.y
-    print("event.x, event.y = ", event.x, event.y)
+    # print("event.x, event.y = ", event.x, event.y)
     savexyplot(x, y)
     sys_out(button_1)
+    logging.info(f"获取点击坐标x：{x}，y：{y}")
 
 
 
@@ -28,12 +35,13 @@ def button_1(event):
 #保存坐标
 def savexyplot(x1,y1):
     xyclickplot={"x":x1,"y":y1}
-    print(xyclickplot)
     np.save('.//data/ClickPlot.npy', xyclickplot)
+    logging.info(f"保存点击坐标至文件：.//data/ClickPlot.npy")
 
 
 #退出程序
 def sys_out(even):
+    logging.info(f"检测到用户按下ESC键，退出获取模拟点击坐标程序。")
     root.destroy()
 
 #监听鼠标和键盘事件，实时监控框选区域和截屏

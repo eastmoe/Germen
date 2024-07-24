@@ -1,8 +1,15 @@
 #获取截图坐标的程序
 import tkinter as tk
 import numpy as np
+import logging
 #from tkinter import messagebox
 #import pyautogui
+
+# 设置日志
+logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
+                    level=logging.DEBUG,
+                    filename='./log/click.log',
+                    filemode='a')
 
 print('请选取小说的阅读页面，不需要包含边框，建议提高对比度以改善OCR文字识别效率。')
 
@@ -29,9 +36,9 @@ def move(event):
     new_y = (event.y-y)+tk.Canvas.winfo_y()
     s = "300x200+" + str(new_x)+"+" + str(new_y)
     tk.Canvas.place(x = new_x - xstart,y = new_y -ystart)
-    print("s = ", s)
-    print(root.winfo_x(), root.winfo_y())
-    print(event.x, event.y)
+    # print("s = ", s)
+    # print(root.winfo_x(), root.winfo_y())
+    # print(event.x, event.y)
 
 #创建子窗口：
 def button_1(event):
@@ -39,7 +46,8 @@ def button_1(event):
     global rec
     x, y = event.x, event.y
     xstart,ystart = event.x, event.y
-    print("event.x, event.y = ", event.x, event.y)
+    logging.info(f"截图范围起始坐标确定：{xstart,ystart}")
+    # print("event.x, event.y = ", event.x, event.y)
     xstart,ystart = event.x, event.y
     cv.configure(height=1)
     cv.configure(width=1)
@@ -51,7 +59,7 @@ def button_1(event):
 def b1_Motion(event):
     global x, y,xstart,ystart
     x, y = event.x, event.y
-    print("event.x, event.y = ", event.x, event.y)
+    # print("event.x, event.y = ", event.x, event.y)
     cv.configure(height = event.y - ystart)
     cv.configure(width = event.x - xstart)
     cv.coords(rec,0,0,event.x-xstart,event.y-ystart)
@@ -61,6 +69,7 @@ def b1_Motion(event):
 def buttonRelease_1(event):
     global xend,yend
     xend, yend = event.x, event.y
+    logging.info(f"截图范围结束坐标确定：{xend, yend}")
     savexyplot(xstart,ystart,xend,yend)
     #保存当前截图坐标到字典文件
     sys_out(None)
@@ -70,9 +79,11 @@ def savexyplot(x1,y1,x2,y2):
     xyplot={"xstart":x1,"ystart":y1,"xend":x2,"yend":y2}
     print(xyplot)
     np.save('.//data/ImagePlot.npy', xyplot)
+    logging.info(f"保存截图范围：{x1,y1,x2,y2}至文件.//data/ImagePlot.npy")
 
 #退出程序
 def sys_out(even):
+    logging.info(f"检测到用户按下ESC键，退出获取截图坐标程序。")
     root.destroy()
 
 

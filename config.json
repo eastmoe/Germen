@@ -1,10 +1,10 @@
 {
-  "PictureDir": "./NovelPictures/",
-  "OCROutPaDir": "./NovelOCRText/",
-  "MergeBookDir": "./MergeText/",
-  "FinalNovelDir": "./FinalBooks/",
-  "Cycle": "10",
-  "OpenAIURL": "http://127.0.0.1:7860",
-  "OpenAIAPIKEY": "",
-  "LLMmodelName": "ChatGLM-6b-128k"
+    "PictureDir": "./NovelPictures/",
+    "OCROutPaDir": "./NovelOCRText/",
+    "MergeBookDir": "./MergeText/",
+    "FinalNovelDir": "./FinalBooks/",
+    "Cycle": "10",
+    "OpenAIURL": "http://127.0.0.1:7860",
+    "OpenAIAPIKEY": "",
+    "LLMmodelName": "ChatGLM-6b-128k"
 }

@@ -3,12 +3,21 @@ import psutil
 import inspect
 import sys
 from pympler import asizeof, muppy,summary
+import logging
+
+# 设置日志
+logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
+                    level=logging.INFO,
+                    filename='./log/performance.log',
+                    filemode='a')
+
 
 def ShowMemoryUse():
     # 获取当前进程的内存信息
     p = psutil.Process()
     m = p.memory_info()
     print("进程内存信息：")
+    logging.info(f"内存信息:常驻内存集：{m.rss / 1024 / 1024} MB\n虚拟内存集：{m.vms / 1024 / 1024} MB")
     print(f"常驻内存集：{m.rss / 1024 / 1024} MB")
     print(f"虚拟内存集：{m.vms / 1024 / 1024} MB")
     #print(f"共享内存：{m.shared / 1024 / 1024} MB")
@@ -19,6 +28,7 @@ def ShowMemoryUse():
 
     # 获取系统的虚拟内存信息
     v = psutil.virtual_memory()
+    logging.info(f"虚拟内存信息:总内存：{v.total / 1024 / 1024} MB\n可用内存：{v.available / 1024 / 1024} MB\n内存使用率：{v.percent} %\n已用内存：{v.used / 1024 / 1024} MB\n空闲内存：{v.free / 1024 / 1024} MB")
     print("虚拟内存信息：")
     print(f"总内存：{v.total / 1024 / 1024} MB")
     print(f"可用内存：{v.available / 1024 / 1024} MB")
@@ -31,6 +41,7 @@ def ShowMemoryUse():
 
     # 获取系统的交换内存信息
     s = psutil.swap_memory()
+    logging.info(f"交换内存信息:总交换内存：{s.total / 1024 / 1024} MB\n已用交换内存：{s.used / 1024 / 1024} MB\n空闲交换内存：{s.free / 1024 / 1024} MB\n交换内存使用率：{s.percent} %")
     print("交换内存信息：")
     print(f"总交换内存：{s.total / 1024 / 1024} MB")
     print(f"已用交换内存：{s.used / 1024 / 1024} MB")
@@ -59,7 +70,8 @@ def ShowMemoryType():
     # 使用summary.summarize(objects)来对对象进行分类和统计，返回一个列表，每个元素包含了类型、数量和总大小4
     summary_list = summary.summarize(object)
     # 使用summary.print_(summary_list)来打印出统计结果
+    logging.debug(f"内存使用情况:{summary_list}")
     summary.print_(summary_list)
 
-
+ShowMemoryType()
 #ShowMemoryUse()

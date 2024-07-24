@@ -4,13 +4,21 @@ import time
 import datetime
 # 使用paddleocr模块而不是paddlehub里的ocrserver
 import paddleocr
+import logging
+
+# 设置日志
+logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
+                    level=logging.INFO,
+                    filename='./log/ocr.log',
+                    filemode='a')
+
 
 # 首次运行需要下载模型并加载入内存
 ocr_program = paddleocr.PaddleOCR(use_angle_cls=False, lang="ch",
                                   # 模型下载：https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.7/doc/doc_ch/models_list.md
                                   det_model_dir="models/ch_PP-OCRv4_det_server_infer",
                                   rec_model_dir="models/ch_PP-OCRv4_rec_server_infer")
-
+logging.info(f"OCR检测模型：models/ch_PP-OCRv4_det_server_infer，识别模型：models/ch_PP-OCRv4_rec_server_infer")
 
 def OCR(PicturePath,OCROutPath):
 #定义OCR函数，参数是图片文件路径和OCR文本输出路径
@@ -19,14 +27,17 @@ def OCR(PicturePath,OCROutPath):
     pathExist2= os.path.exists(OCROutPath)
     if (pathExist1  == False):
     #检查路径是否存在
+        logging.error('图片文件路径路径错误，程序将退出。')
         print('图片文件路径路径错误，程序将退出。')
         return "Error"
     if (pathExist2  == False):
     #检查路径是否存在
+        logging.error('OCR文本输出路径错误，程序将退出。')
         print('OCR文本输出路径错误，程序将退出。')
         return "Error"
 
-    print("本次图片转文字开始时间：",datetime.datetime.now(),"\n")
+    logging.info(f"本次图片转文字开始时间：{datetime.datetime.now()}")
+    #print("本次图片转文字开始时间：",datetime.datetime.now(),"\n")
 
     # 图片OCR
     # 基于模块的ocr
@@ -43,6 +54,7 @@ def OCR(PicturePath,OCROutPath):
     currentLine = 1
     # 计算总行数
     lineNumber = len(OCRTxtList)
+    logging.info(f"当前页面文字行数：{lineNumber}")
 
     for elements in OCRTxtList:
             # 将列表元素赋给当前行
@@ -74,8 +86,8 @@ def OCR(PicturePath,OCROutPath):
     txtfile = open(txtpath, 'w', encoding="utf-8")
     txtfile.write(text)
     txtfile.close()
-
-    print("本次图片转文字结束时间：",datetime.datetime.now(),"\n")
+    logging.info(f"本次图片转文字结束时间：{datetime.datetime.now()}，文件保存为{txtpath}")
+    #print("本次图片转文字结束时间：",datetime.datetime.now(),"\n")
 
     return 0
 
@@ -87,7 +99,7 @@ def TestFeature():
     OCR(Image,OCROutDir)
     return 0
 
-TestFeature()
+#TestFeature()
 
 
 

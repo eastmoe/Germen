@@ -3,6 +3,15 @@ from PIL import ImageGrab
 import numpy as np
 import time
 import os
+import logging
+
+# 设置日志
+logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
+                    level=logging.DEBUG,
+                    filename='./log/grab.log',
+                    filemode='a')
+
+
 
 #截图函数，参数是截图保存路径
 def GrabReadImage(ImageSaveDir):
@@ -10,7 +19,7 @@ def GrabReadImage(ImageSaveDir):
     pathExist1 = os.path.exists(ImageSaveDir)
     if (pathExist1 == False):
         # 检查路径是否存在
-        print('截图保存路径错误，程序将退出。')
+        logging.error('截图保存路径错误，程序将退出。')
         return "Error"
 
     xyplot = np.load('.//data/ImagePlot.npy', allow_pickle=True).item()
@@ -30,6 +39,7 @@ def GrabReadImage(ImageSaveDir):
     # 第三个参数 结束截图的x坐标
     # 第四个参数 结束截图的y坐标
     bbox = (xstart, ystart, xend, yend)
+    logging.info(f"获取截图坐标成功，xstart:{xstart}，ystart:{ystart}，xend:{xend}，yend:{yend}")
     im = ImageGrab.grab(bbox)
     # 截图
 
@@ -44,6 +54,7 @@ def GrabReadImage(ImageSaveDir):
 
     # 保存截图文件
     im.save(imgpath)
+    logging.info(f"截图成功，文件位于{imgpath}")
 
     return 0
 

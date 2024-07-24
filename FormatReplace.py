@@ -1,5 +1,13 @@
 #处理合并之后的文件换行与段落格式
 import os
+import logging
+
+# 设置日志
+logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
+                    level=logging.DEBUG,
+                    filename='./log/text.log',
+                    filemode='a')
+
 
 #定义函数，恢复段落前空格，参数为合并后的小说文本文件路径，最终输出的小说路径
 def AddSpaceForParagraphs(MergeTextFile,NovelPath):
@@ -33,6 +41,7 @@ def AddSpaceForParagraphs(MergeTextFile,NovelPath):
     novelfile = open(NovelPath, "w", encoding="utf-8")
     novelfile.writelines(new_lines)
     novelfile.close()
+    logging.info(f"{MergeTextFile}恢复段落前空格成功，最终输出为{NovelPath}")
     return 0
 
 
@@ -43,7 +52,7 @@ def UpdateFormat(NovelPath):
     PathExist1 = os.path.exists(NovelPath)
     if (PathExist1 == False):
         # 检查路径是否存在
-        print('合并后的小说文本文件路径错误，程序将退出。')
+        logging.error(f'合并后的小说文本文件路径{NovelPath}错误，程序将退出。')
         return "Error"
 
     # 打开txt文件
@@ -72,6 +81,7 @@ def UpdateFormat(NovelPath):
     file = open(NovelPath, "w", encoding="utf-8")
     file.write(new_text)
     file.close()
+    logging.info(f"小说{NovelPath}格式处理成功")
 
     return 0
 

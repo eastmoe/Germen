@@ -1,11 +1,18 @@
 #文本合并程序
 import os
+import logging
 
+# 设置日志
+logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
+                    level=logging.DEBUG,
+                    filename='./log/text.log',
+                    filemode='a')
 
 #用于文件按照修改时间顺序排序的函数，参数是OCR输出路径
 def GetFileList(file_path):
     dir_list = os.listdir(file_path)
     if not dir_list:
+        logging.error(f"错误！配置的OCR输出目录{file_path}无文本文件！")
         print("错误！配置的OCR输出目录无文本文件！")
         return "Error"
     else:
@@ -13,6 +20,7 @@ def GetFileList(file_path):
         # os.path.getmtime() 函数是获取文件最后修改时间
          # os.path.getctime() 函数是获取文件最后创建时间
         dir_list = sorted(dir_list,key=lambda x: os.path.getmtime(os.path.join(file_path, x)))
+        logging.info(f"OCR文本列表：{dir_list}")
         # print(dir_list)
     return dir_list
 
@@ -21,6 +29,7 @@ def Merge(file_list,dir_path,novelfile):
     PathExist1 = os.path.exists(dir_path)
     if (PathExist1 == False):
         # 检查路径是否存在
+        logging.error(f"错误！配置的OCR输出目录{dir_path}无文本文件！")
         print('OCR输出路径错误，程序将退出。')
         return "Error"
 
@@ -37,9 +46,11 @@ def Merge(file_list,dir_path,novelfile):
         novel.write("\n")
         #每写完一个文件，就换行
     novel.close()
+    logging.info(f"合并成功，文件位于：{novelfile}")
     print("合并成功！文件位于",novelfile)
     return 0
 
+# 功能测试函数
 def TestFeature():
     OCROutpath="E:/个人文件/Documents/GITHUB/Germen/NovelOCRText"
     MergeBookPath="E:/个人文件/Documents/GITHUB/Germen/MergeText/ExampleMergeBook.txt"
