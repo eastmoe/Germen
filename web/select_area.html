@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        #canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+        // 设置canvas大小为屏幕截图大小
+        canvas.width = /* 截图宽度 */;
+        canvas.height = /* 截图高度 */;
+
+        var rect = {};
+        var drag = false;
+
+        canvas.addEventListener('mousedown', function(e) {
+            rect.startX = e.pageX - this.offsetLeft;
+            rect.startY = e.pageY - this.offsetTop;
+            drag = true;
+        });
+
+        canvas.addEventListener('mousemove', function(e) {
+            if (drag) {
+                rect.w = (e.pageX - this.offsetLeft) - rect.startX;
+                rect.h = (e.pageY - this.offsetTop) - rect.startY;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeRect(rect.startX, rect.startY, rect.w, rect.h);
+            }
+        });
+
+        canvas.addEventListener('mouseup', function(e) {
+            drag = false;
+            // 这里可以发送rect对象到Python后端
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+
+# 最后的截图窗口显示在本地，因此被弃用
+import streamlit as st
+import cv2
+import numpy as np
+from PIL import Image
+import mss
+import mss.tools
+
+
+# 初始化状态变量
+if 'drawing' not in st.session_state:
+    st.session_state.drawing = False
+if 'start_point' not in st.session_state:
+    st.session_state.start_point = None
+if 'end_point' not in st.session_state:
+    st.session_state.end_point = None
+
+
+def capture_screenshot():
+    with mss.mss() as sct:
+        screenshot = sct.shot(output="screenshot.png")
+    return "screenshot.png"
+
+def main():
+    st.title("远程桌面截图工具")
+
+    if st.button("捕获屏幕截图"):
+        screenshot_path = capture_screenshot()
+        st.image(screenshot_path, caption="全屏截图", use_column_width=True)
+
+        # 读取图片
+        image = Image.open(screenshot_path)
+        img_array = np.array(image)
+
+        # 定义鼠标事件回调函数
+        def mouse_callback(event, x, y, flags, param):
+            if event == cv2.EVENT_LBUTTONDOWN:
+                st.session_state.drawing = True
+                st.session_state.start_point = (x, y)
+            elif event == cv2.EVENT_LBUTTONUP:
+                st.session_state.drawing = False
+                st.session_state.end_point = (x, y)
+                cv2.rectangle(img_array, st.session_state.start_point, st.session_state.end_point, (0, 255, 0), 2)
+            elif event == cv2.EVENT_MOUSEMOVE:
+                if st.session_state.drawing:
+                    temp_img = img_array.copy()
+                    cv2.rectangle(temp_img, st.session_state.start_point, (x, y), (0, 255, 0), 2)
+                    cv2.imshow("Image", temp_img)
+
+        # 创建窗口并设置鼠标回调
+        cv2.namedWindow("Image")
+        cv2.setMouseCallback("Image", mouse_callback)
+
+        # 显示图片
+        cv2.imshow("Image", img_array)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        # 显示框选的坐标
+        if st.session_state.start_point and st.session_state.end_point:
+            st.write(f"框选的起始坐标: {st.session_state.start_point}")
+            st.write(f"框选的结束坐标: {st.session_state.end_point}")
+
+            # 显示框选后的图片
+            st.image(img_array, channels="BGR")
+
+if __name__ == "__main__":
+    main()
+
+
