@@ -1,6 +1,6 @@
-numpy~=1.24.2
-pyautogui~=0.9.53
-pillow~=10.2.0
-keyboard~=0.13.5
+numpy
+pyautogui>=0.9.53
+pillow
+keyboard>=0.13.5
 openai>=1.76.0
-pywin32>=306
+pywin32>=306; platform_system == "Windows"
