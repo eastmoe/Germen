@@ -34,6 +34,10 @@ class GermenGUI(tk.Tk):
             key: tk.StringVar(value=str(self.config_data.get(key, DEFAULT_CONFIG.get(key, ""))))
             for key in DEFAULT_CONFIG
         }
+        self.input_source_var = tk.StringVar(value=self.vars["InputSource"].get())
+        self.input_source_display_to_id: dict[str, str] = {}
+        self.adb_device_var = tk.StringVar(value=self.vars["ADBSerial"].get())
+        self.adb_display_to_serial: dict[str, str] = {}
         self.pin_window_var = tk.BooleanVar(value=False)
 
         self.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -114,20 +118,28 @@ class GermenGUI(tk.Tk):
         self.input_source_box = ttk.Combobox(
             capture_frame,
             values=(self.vars["InputSource"].get(),),
-            textvariable=self.vars["InputSource"],
+            textvariable=self.input_source_var,
             width=10,
         )
         self.input_source_box.grid(row=0, column=3, sticky="ew", padx=8, pady=6)
+        self.input_source_box.bind("<<ComboboxSelected>>", lambda _event: self._on_input_source_selected())
 
         ttk.Button(capture_frame, text="扫描输入源", command=self._scan_input_sources).grid(
             row=0, column=4, sticky="ew", padx=8, pady=6
         )
 
-        ttk.Label(capture_frame, text="ADB 序列号").grid(row=0, column=5, sticky="e", padx=8, pady=6)
-        ttk.Entry(capture_frame, textvariable=self.vars["ADBSerial"], width=16).grid(
+        ttk.Label(capture_frame, text="ADB 设备").grid(row=0, column=5, sticky="e", padx=8, pady=6)
+        self.adb_device_box = ttk.Combobox(
+            capture_frame,
+            values=(self.vars["ADBSerial"].get(),),
+            textvariable=self.adb_device_var,
+            width=16,
+        )
+        self.adb_device_box.grid(
             row=0, column=6, sticky="ew", padx=8, pady=6
         )
-        ttk.Button(capture_frame, text="连接 ADB", command=self._connect_adb).grid(
+        self.adb_device_box.bind("<<ComboboxSelected>>", lambda _event: self._on_adb_device_selected())
+        ttk.Button(capture_frame, text="扫描 ADB", command=self._scan_adb_devices).grid(
             row=0, column=7, sticky="ew", padx=8, pady=6
         )
 
@@ -180,6 +192,9 @@ class GermenGUI(tk.Tk):
         )
         ttk.Button(capture_frame, text="清空 OCR 文本", command=self._clear_ocr_text).grid(
             row=2, column=7, sticky="ew", padx=8, pady=6
+        )
+        ttk.Button(capture_frame, text="连接 ADB", command=self._connect_adb).grid(
+            row=3, column=5, columnspan=3, sticky="ew", padx=8, pady=6
         )
 
         action_frame = ttk.Frame(self)
@@ -249,7 +264,32 @@ class GermenGUI(tk.Tk):
         if not prompt:
             self._set_prompt_text(default_prompt)
 
+    def _current_input_source_id(self) -> str:
+        value = self.input_source_var.get().strip()
+        return self.input_source_display_to_id.get(value, value)
+
+    def _current_adb_serial(self) -> str:
+        value = self.adb_device_var.get().strip()
+        return self.adb_display_to_serial.get(value, value)
+
+    def _on_input_source_selected(self) -> None:
+        self.vars["InputSource"].set(self._current_input_source_id())
+
+    def _on_adb_device_selected(self) -> None:
+        self.vars["ADBSerial"].set(self._current_adb_serial())
+
+    def _set_adb_selection_by_serial(self, serial: str) -> None:
+        for label, item_serial in self.adb_display_to_serial.items():
+            if item_serial == serial:
+                self.adb_device_var.set(label)
+                break
+        else:
+            self.adb_device_var.set(serial)
+        self.vars["ADBSerial"].set(serial)
+
     def _read_ui_config(self) -> dict:
+        self.vars["InputSource"].set(self._current_input_source_id())
+        self.vars["ADBSerial"].set(self._current_adb_serial())
         config = {key: var.get() for key, var in self.vars.items()}
         config["OpenAIOCRPrompt"] = self.prompt_text.get("1.0", "end").strip()
         if config.get("OCRBackend") == "专用OCR路径":
@@ -279,20 +319,44 @@ class GermenGUI(tk.Tk):
 
     def _scan_input_sources(self) -> None:
         try:
-            sources = workflow.list_input_sources()
+            sources = workflow.list_input_source_details()
         except Exception as exc:
             messagebox.showerror("扫描失败", str(exc))
             return
         if not sources:
             self._log("没有扫描到可读取的图像输入源。")
             return
-        self.input_source_box.configure(values=sources)
-        if self.vars["InputSource"].get() not in sources:
-            self.vars["InputSource"].set(sources[0])
-        self._log(f"已扫描到图像输入源: {', '.join(sources)}")
+        labels = [source["label"] for source in sources]
+        self.input_source_display_to_id = {source["label"]: source["id"] for source in sources}
+        self.input_source_box.configure(values=labels)
+        current = self.vars["InputSource"].get()
+        selected = next((source["label"] for source in sources if source["id"] == current), labels[0])
+        self.input_source_var.set(selected)
+        self.vars["InputSource"].set(self.input_source_display_to_id[selected])
+        self._log(f"已扫描到图像输入源: {', '.join(labels)}")
+
+    def _scan_adb_devices(self) -> None:
+        try:
+            devices = workflow.list_adb_devices()
+        except Exception as exc:
+            messagebox.showerror("扫描失败", str(exc))
+            return
+        if not devices:
+            self._log("没有扫描到 ADB 设备。")
+            return
+
+        labels = [device["label"] for device in devices]
+        self.adb_display_to_serial = {device["label"]: device["serial"] for device in devices}
+        self.adb_device_box.configure(values=labels)
+        current = self.vars["ADBSerial"].get()
+        selected = next((device["label"] for device in devices if device["serial"] == current), labels[0])
+        self.adb_device_var.set(selected)
+        self.vars["ADBSerial"].set(self.adb_display_to_serial[selected])
+        self._log(f"已扫描到 ADB 设备: {', '.join(labels)}")
 
     def _preview_input_source(self) -> None:
-        source = self.vars["InputSource"].get()
+        source = self._current_input_source_id()
+        self.vars["InputSource"].set(source)
         if self.preview_window and self.preview_window.winfo_exists():
             if self.preview_source == source:
                 self.preview_window.lift()
@@ -498,7 +562,7 @@ class GermenGUI(tk.Tk):
                 self._set_busy(False)
                 messagebox.showerror("任务失败", message)
             elif kind == "adb_serial":
-                self.vars["ADBSerial"].set(str(payload["serial"]))
+                self._set_adb_selection_by_serial(str(payload["serial"]))
                 self._save_config_from_ui()
                 self._set_busy(False)
             elif kind == "adb_tap":

@@ -271,7 +271,7 @@ INDEX_HTML = r"""<!doctype html>
       <h2>2. 图像输入源</h2>
       <p class="hint">WebUI 只使用服务器端的图像输入源，不使用远程浏览器上传图片，也不使用屏幕区域截图。</p>
       <div class="grid three">
-        <div class="field"><label>输入源编号或 URL</label><input id="InputSource"></div>
+        <div class="field"><label>输入源名称或 ID</label><input id="InputSource" list="sourceOptions"><datalist id="sourceOptions"></datalist></div>
         <div class="field"><label>预热帧数</label><input id="InputSourceWarmupFrames" inputmode="numeric"></div>
         <div class="field"><label>扫描范围</label><input id="scanMax" value="8" inputmode="numeric"></div>
       </div>
@@ -300,11 +300,12 @@ INDEX_HTML = r"""<!doctype html>
             <option value="模拟点击">模拟点击</option>
           </select>
         </div>
-        <div class="field"><label>ADB 序列号</label><input id="ADBSerial" placeholder="单设备可留空"></div>
+        <div class="field"><label>ADB 设备名称或 ID</label><input id="ADBSerial" list="adbOptions" placeholder="单设备可留空"><datalist id="adbOptions"></datalist></div>
         <div class="field click-field"><label>点击 X</label><input id="ClickX" inputmode="numeric"></div>
         <div class="field click-field"><label>点击 Y</label><input id="ClickY" inputmode="numeric"></div>
       </div>
       <div class="actions">
+        <button id="scanAdbBtn" class="secondary">扫描 ADB 设备</button>
         <button data-save="page">保存翻页方式</button>
         <button id="testPageBtn" class="secondary">测试翻页</button>
       </div>
@@ -363,6 +364,8 @@ INDEX_HTML = r"""<!doctype html>
     let currentStep = 0;
     let savedSteps = new Set();
     let config = {};
+    let inputSources = [];
+    let adbDevices = [];
 
     const $ = id => document.getElementById(id);
     const api = async (path, options = {}) => {
@@ -440,6 +443,38 @@ INDEX_HTML = r"""<!doctype html>
       $("runtimeInfo").classList.toggle("error", !opencv.ok);
     }
 
+    function renderDatalist(id, items) {
+      const list = $(id);
+      list.innerHTML = "";
+      items.forEach(item => {
+        const option = document.createElement("option");
+        option.value = item.label;
+        list.appendChild(option);
+      });
+    }
+
+    function selectedInputSourceId() {
+      const value = $("InputSource").value.trim();
+      const match = inputSources.find(item => item.label === value);
+      return match ? match.id : value;
+    }
+
+    function selectedAdbSerial() {
+      const value = $("ADBSerial").value.trim();
+      const match = adbDevices.find(item => item.label === value);
+      return match ? match.serial : value;
+    }
+
+    function selectInputSourceById(id) {
+      const match = inputSources.find(item => item.id === id);
+      $("InputSource").value = match ? match.label : id;
+    }
+
+    function selectAdbBySerial(serial) {
+      const match = adbDevices.find(item => item.serial === serial);
+      $("ADBSerial").value = match ? match.label : serial;
+    }
+
     async function loadConfig() {
       const data = await api("/api/config");
       fillConfig(data);
@@ -489,12 +524,12 @@ INDEX_HTML = r"""<!doctype html>
           api: apiPayload(),
           input: {
             CaptureSource: "图像输入源",
-            InputSource: $("InputSource").value,
+            InputSource: selectedInputSourceId(),
             InputSourceWarmupFrames: $("InputSourceWarmupFrames").value
           },
           page: {
             PageMethod: $("PageMethod").value,
-            ADBSerial: $("ADBSerial").value,
+            ADBSerial: selectedAdbSerial(),
             ClickX: $("ClickX").value,
             ClickY: $("ClickY").value
           },
@@ -573,10 +608,39 @@ INDEX_HTML = r"""<!doctype html>
     $("scanSourcesBtn").onclick = async event => {
       setBusy(event.target, true);
       try {
+        const current = selectedInputSourceId();
         const data = await api(`/api/input-sources?max=${encodeURIComponent($("scanMax").value)}`);
-        showResult("sourceList", data.sources.length ? `可用输入源：${data.sources.join(", ")}` : "没有扫描到可用输入源。");
+        inputSources = data.sources || [];
+        renderDatalist("sourceOptions", inputSources);
+        if (inputSources.length) {
+          const selected = inputSources.find(item => item.id === current) || inputSources[0];
+          $("InputSource").value = selected.label;
+          showResult("sourceList", `可用输入源：\n${inputSources.map(item => item.label).join("\n")}`);
+        } else {
+          showResult("sourceList", "没有扫描到可用输入源。");
+        }
       } catch (error) {
         showResult("sourceList", error.message, true);
+      } finally {
+        setBusy(event.target, false);
+      }
+    };
+    $("scanAdbBtn").onclick = async event => {
+      setBusy(event.target, true);
+      try {
+        const current = selectedAdbSerial();
+        const data = await api("/api/adb-devices");
+        adbDevices = data.devices || [];
+        renderDatalist("adbOptions", adbDevices);
+        if (adbDevices.length) {
+          const selected = adbDevices.find(item => item.serial === current) || adbDevices[0];
+          $("ADBSerial").value = selected.label;
+          showResult("pageResult", `ADB 设备：\n${adbDevices.map(item => item.label).join("\n")}`);
+        } else {
+          showResult("pageResult", "没有扫描到 ADB 设备。");
+        }
+      } catch (error) {
+        showResult("pageResult", error.message, true);
       } finally {
         setBusy(event.target, false);
       }
@@ -585,7 +649,7 @@ INDEX_HTML = r"""<!doctype html>
       setBusy(event.target, true);
       try {
         const data = await api("/api/preview", {method: "POST", body: JSON.stringify({
-          InputSource: $("InputSource").value,
+          InputSource: selectedInputSourceId(),
           InputSourceWarmupFrames: $("InputSourceWarmupFrames").value
         })});
         $("previewImage").src = data.dataUrl;
@@ -601,7 +665,7 @@ INDEX_HTML = r"""<!doctype html>
       try {
         await api("/api/config/page", {method: "POST", body: JSON.stringify({
           PageMethod: $("PageMethod").value,
-          ADBSerial: $("ADBSerial").value,
+          ADBSerial: selectedAdbSerial(),
           ClickX: $("ClickX").value,
           ClickY: $("ClickY").value
         })});
@@ -935,7 +999,14 @@ class WebUIHandler(BaseHTTPRequestHandler):
 
                 query = dict(item.split("=", 1) for item in parsed.query.split("&") if "=" in item)
                 max_index = int(query.get("max") or 8)
-                self.send_json({"ok": True, "sources": workflow.list_input_sources(max_index)})
+                self.send_json({"ok": True, "sources": workflow.list_input_source_details(max_index)})
+                return
+            if path == "/api/adb-devices":
+                if not self.require_auth():
+                    return
+                import workflow
+
+                self.send_json({"ok": True, "devices": workflow.list_adb_devices()})
                 return
             if path.startswith("/static/"):
                 self.serve_static(path)

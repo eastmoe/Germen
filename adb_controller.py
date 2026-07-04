@@ -15,6 +15,12 @@ class ADBError(RuntimeError):
 class ADBDevice:
     serial: str
     state: str
+    name: str = ""
+
+    @property
+    def label(self) -> str:
+        name = self.name or "未知设备"
+        return f"{name} (ID: {self.serial}, 状态: {self.state})"
 
 
 def _adb_command(serial: str = "") -> list[str]:
@@ -45,20 +51,41 @@ def _run_adb(args: list[str], serial: str = "", timeout: float = 10) -> str:
     return result.stdout.strip()
 
 
-def list_devices() -> list[ADBDevice]:
+def _read_device_name(serial: str) -> str:
+    def read_prop(args: list[str]) -> str:
+        try:
+            return _run_adb(args, serial=serial, timeout=3).strip()
+        except ADBError:
+            return ""
+
+    custom_name = read_prop(["shell", "settings", "get", "global", "device_name"])
+    if custom_name and custom_name.lower() != "null":
+        return custom_name
+
+    manufacturer = read_prop(["shell", "getprop", "ro.product.manufacturer"])
+    model = read_prop(["shell", "getprop", "ro.product.model"])
+    return " ".join(item for item in (manufacturer, model) if item).strip()
+
+
+def list_devices(include_names: bool = True) -> list[ADBDevice]:
     _run_adb(["start-server"], timeout=15)
     output = _run_adb(["devices"])
     devices: list[ADBDevice] = []
     for line in output.splitlines()[1:]:
         parts = line.split()
         if len(parts) >= 2:
-            devices.append(ADBDevice(parts[0], parts[1]))
+            serial, state = parts[0], parts[1]
+            name = _read_device_name(serial) if include_names and state == "device" else ""
+            devices.append(ADBDevice(serial, state, name))
     return devices
 
 
 def resolve_serial(serial: str = "") -> str:
     serial = str(serial or "").strip()
-    devices = [device for device in list_devices() if device.state == "device"]
+    label_match = re.search(r"\bID:\s*([^,\)]+)", serial)
+    if label_match:
+        serial = label_match.group(1).strip()
+    devices = [device for device in list_devices(include_names=False) if device.state == "device"]
     if serial:
         if any(device.serial == serial for device in devices):
             return serial

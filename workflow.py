@@ -148,6 +148,29 @@ def learn_adb_tap(config: Optional[Dict[str, Any]] = None, callback: EventCallba
     return {"x": x, "y": y}
 
 
+def list_adb_devices() -> list[Dict[str, str]]:
+    import adb_controller
+
+    return [
+        {
+            "serial": device.serial,
+            "state": device.state,
+            "name": device.name or "未知设备",
+            "label": device.label,
+        }
+        for device in adb_controller.list_devices()
+    ]
+
+
+def list_input_source_details(max_index: int = 8) -> list[Dict[str, str]]:
+    import frame_sources
+
+    return [
+        {"id": source.id, "name": source.name, "label": source.label}
+        for source in frame_sources.list_input_source_details(max_index)
+    ]
+
+
 def list_input_sources(max_index: int = 8) -> list[str]:
     import frame_sources
 

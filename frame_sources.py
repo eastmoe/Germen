@@ -1,7 +1,21 @@
 import time
 import sys
+import json
+import re
+import subprocess
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict
+
+
+@dataclass
+class InputSourceInfo:
+    id: str
+    name: str
+
+    @property
+    def label(self) -> str:
+        return f"{self.name} (ID: {self.id})"
 
 
 def _timestamped_png(output_dir: Path) -> Path:
@@ -13,6 +27,9 @@ def parse_input_source(value: str) -> int | str:
     value = str(value or "0").strip()
     if value.isdigit():
         return int(value)
+    id_match = re.search(r"\(ID:\s*(\d+)\)|\bID:\s*(\d+)\b", value, flags=re.IGNORECASE)
+    if id_match:
+        return int(next(group for group in id_match.groups() if group is not None))
     return value
 
 
@@ -80,20 +97,70 @@ def capture_frame(config: Dict[str, Any], output_dir: Path) -> Path:
     return capture_desktop_region(output_dir)
 
 
-def list_input_sources(max_index: int = 8) -> list[str]:
+def _windows_video_device_names() -> list[str]:
+    if not sys.platform.startswith("win"):
+        return []
+
+    command = r"""
+$devices = Get-CimInstance Win32_PnPEntity |
+  Where-Object {
+    $_.PNPClass -in @('Camera','Image') -or
+    $_.Name -match 'camera|摄像|video|capture|采集'
+  } |
+  Select-Object Name, PNPDeviceID
+$devices | ConvertTo-Json -Depth 2 -Compress
+"""
+    try:
+        result = subprocess.run(
+            ["powershell", "-NoProfile", "-Command", command],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=5,
+            check=False,
+        )
+    except Exception:
+        return []
+    if result.returncode != 0 or not result.stdout.strip():
+        return []
+
+    try:
+        data = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        return []
+    if isinstance(data, dict):
+        data = [data]
+
+    names: list[str] = []
+    seen: set[str] = set()
+    for item in data if isinstance(data, list) else []:
+        name = str(item.get("Name") or "").strip()
+        if name and name not in seen:
+            names.append(name)
+            seen.add(name)
+    return names
+
+
+def list_input_source_details(max_index: int = 8) -> list[InputSourceInfo]:
     try:
         import cv2
     except Exception as exc:
         raise _opencv_import_error("扫描图像输入源", exc) from exc
 
-    sources: list[str] = []
+    names = _windows_video_device_names()
+    sources: list[InputSourceInfo] = []
     for index in range(max(1, int(max_index))):
         capture = cv2.VideoCapture(index, cv2.CAP_DSHOW)
         try:
             if capture.isOpened():
                 ok, _ = capture.read()
                 if ok:
-                    sources.append(str(index))
+                    name = names[index] if index < len(names) else f"图像输入源 {index}"
+                    sources.append(InputSourceInfo(str(index), name))
         finally:
             capture.release()
     return sources
+
+
+def list_input_sources(max_index: int = 8) -> list[str]:
+    return [source.id for source in list_input_source_details(max_index)]
