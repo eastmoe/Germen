@@ -50,12 +50,3 @@ def Merge(file_list,dir_path,novelfile):
     print("合并成功！文件位于",novelfile)
     return 0
 
-# 功能测试函数
-def TestFeature():
-    OCROutpath="E:/个人文件/Documents/GITHUB/Germen/NovelOCRText"
-    MergeBookPath="E:/个人文件/Documents/GITHUB/Germen/MergeText/ExampleMergeBook.txt"
-    OCRTextList=GetFileList(OCROutpath)
-    Merge(OCRTextList,OCROutpath,MergeBookPath)
-    return 0
-
-#TestFeature()

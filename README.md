@@ -120,8 +120,6 @@ WebUI 的配置流程：
 
 - `src/germen/`：主程序包。
 - `src/germen/web/`：WebUI 服务。
-- `data/`：坐标、替换词表等运行数据。
+- `data/`：截图区域和点击坐标等运行数据。
 - `static/`：WebUI 测试图片、预览图片等静态文件。
-- `tools/`：外部辅助工具和宏文件。
-- `legacy/streamlit/`：旧版 Streamlit 原型，默认运行路径不依赖它。
 - `NovelPictures/`、`NovelOCRText/`、`MergeText/`、`FinalBooks/`、`log/`：运行产物目录，默认不提交。

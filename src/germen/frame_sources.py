@@ -44,9 +44,9 @@ def _opencv_import_error(action: str, exc: Exception) -> RuntimeError:
 
 
 def capture_desktop_region(output_dir: Path) -> Path:
-    import ImageGrab
+    from . import image_grab
 
-    result = ImageGrab.GrabReadImage(str(output_dir))
+    result = image_grab.GrabReadImage(str(output_dir))
     if result == "Error":
         raise RuntimeError("截图失败，请检查截图保存目录和截图区域。")
     if result:

@@ -87,11 +87,3 @@ def UpdateFormat(NovelPath):
 
     return 0
 
-def TestFeature():
-    MergeTextFile = "E:/个人文件/Desktop/临时文件/ExampleMergeBook.txt"
-    Novel="E:/个人文件/Documents/GITHUB/Germen/FinalBooks/example.txt"
-    AddSpaceForParagraphs(MergeTextFile,Novel)
-    UpdateFormat(Novel)
-    return 0
-
-#TestFeature()

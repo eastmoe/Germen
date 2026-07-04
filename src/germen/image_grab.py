@@ -59,13 +59,3 @@ def GrabReadImage(ImageSaveDir):
     logging.info(f"截图成功，文件位于{imgpath}")
 
     return imgpath
-
-
-def TestFeature():
-    while True:
-        ImageSaveDir = "./temp/"
-        GrabReadImage(ImageSaveDir)
-        import Memory
-        Memory.ShowMemoryType()
-    return 0
-#TestFeature()

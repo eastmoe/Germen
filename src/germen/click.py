@@ -16,13 +16,3 @@ def ClickToNextPage():
     win_input.click(x, y)
 
     return 0
-
-def TestFeature():
-    #while True:
-        ClickToNextPage()
-        import Memory
-        Memory.ShowMemoryType()
-
-
-if __name__ == "__main__":
-    TestFeature()
