@@ -1,59 +1,56 @@
 # Germen
 
-一款实验性质的个人向通用安卓移动端在线阅读app小说提取工具。“Germen”源于拉丁语“幼苗”。
+Germen 是一个个人向安卓阅读 App 小说提取工具：按固定区域截图，使用 OpenAI API 进行图片 OCR，自动翻页，并把 OCR 文本合并、整理成最终小说文本。
 
-## 设计思路
+## 当前架构
 
-![mind.PNG](https://s2.loli.net/2023/03/05/SwvrBoVMe1ThK7D.png)
-> 注：后面的格式处理已经全部改用Python完成，上面只是大概思路而已。
+- `GUI.py`：推荐入口，可配置目录、OpenAI API、截图区域、翻页方式、采集页数，并启动采集/合并/格式化。
+- `OpenAIOCR.py`：唯一 OCR 后端，使用 OpenAI API 识别截图文本。
+- `workflow.py`：采集、OCR、翻页、合并、格式化的公共流程，GUI 和命令行共用。
+- `MainProgram.py`：命令行兼容入口，适合已有配置后快速运行。
 
-## 开发进度
+## 配置文件
 
-*开发截图与模拟点击的部分。*（已完成）
+`config.json` 的主要字段：
 
-*开发OCR部分*（已完成）
+1. `PictureDir`：截图保存目录。
+2. `OCROutPaDir`：OpenAI OCR 生成的文本保存目录。
+3. `MergeBookDir`：合并后、未格式化文本的保存目录。
+4. `FinalNovelDir`：最终文本保存目录。
+5. `Cycle`：每一轮截图、OCR、翻页后的等待秒数。
+6. `OpenAIURL`：OpenAI API Base URL，官方接口通常为 `https://api.openai.com/v1`。
+7. `OpenAIAPIKEY`：OpenAI API Key。也可以留空并设置环境变量 `OPENAI_API_KEY`。
+8. `OpenAIOCRModel`：用于 OCR 的视觉模型。
+9. `OpenAIOCRPrompt`：OCR 提示词。
+10. `PageMethod`：`模拟按键` 或 `模拟点击`。
+11. `PageKey`：模拟按键翻页时发送的按键。
+12. `CapturePages`：计划采集页数。
 
-*开发文本处理部分*（已完成）
+## 使用方法
 
-*开发主程序*（已完成）
+1. 创建并进入 Python 3.10+ 虚拟环境。
+2. 安装依赖：
 
-**调试程序与修复Bug**（进行中）
+```powershell
+pip install -r requirements.txt
+```
 
-**开发GUI**（进行中）
+3. 运行 GUI：
 
-## 窗口化图形界面（已停止开发）
+```powershell
+python GUI.py
+```
 
-![GermenGUIv1.PNG](https://s2.loli.net/2023/03/16/HvZ97gxJ6UyPR1j.png)
+4. 在 GUI 中配置 OpenAI API Key、模型、截图目录和输出目录。
+5. 点击“选择截图区域”，框选小说正文区域。
+6. 选择翻页方式：
+   - `模拟按键`：先在模拟器中配置键盘映射，再填入按键。
+   - `模拟点击`：点击“选择点击坐标”，选择翻页点击位置。
+7. 点击“开始采集”或“一键采集并生成”。
 
-## 配置文件（config.json）说明
+## 注意事项
 
-1. PictureDir ：保存截图的路径
-2. OCROutPaDir：保存OCR生成的文本的路径
-3. MergeBookDir：保存经过了合并，但是未处理格式的文本文件的路径
-4. FinalNovelDir：保存经过格式处理的文本文件的路径
-5. Cycle：每一轮截图-翻页-文字识别的间隔时间，默认为30秒
-
-
-## 使用说明
-
-
-1. 进入Python环境（推荐使用virtualenv或者conda为本项目设置一个专属虚拟环境）（开发环境为Python 3.10）。
-2. 将下载好的Release压缩包解压（或者git clone），在项目根目录运行`pip install -r requirements.txt -I  -i https://pypi.tuna.tsinghua.edu.cn/simple `安装依赖。
-3. [下载](https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.7/doc/doc_ch/models_list.md)OCR推理模型（[ch_PP-OCRv4_det_server_infer](https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese/ch_PP-OCRv4_det_server_infer.tar)和[ch_PP-OCRv4_rec_server_infer](https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese/ch_PP-OCRv4_rec_server_infer.tar)），并解压后放入models文件夹中，形成下面的结构：
-
-    ![models.png](https://s2.loli.net/2024/03/21/UELqRec39l84psz.jpg)
-4. 运行`python MainProgram.py`启动主程序。
-4. 按照流程执行操作。
-
-
-## 小贴士
-
-1. 在安装依赖中的Paddle(飞浆)时，有可能会因为依赖原因而导致安装失败。推荐按照官方的[说明](https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.7/doc/doc_ch/quickstart.md#1-%E5%AE%89%E8%A3%85)手动安装相关的组件。
-2. 在每次运行采集时，务必清空**OCROutPaDir**里残留的OCR文本，以免合成的文本混杂上一次的内容。
-3. 推荐提高阅读界面的对比度，使用常规字体以获得更高的识别准确率。调整字体大小以提高获取文本的效率。
-4. 确认设置的模拟点击位置在现在和未来的截屏中不会遮挡文字，否则可能造成OCR识别错误、缺字等。
-5. 在程序运作时，请不要遮挡窗口，也尽量不要做拖拽操作，以免模拟点击被用户操作覆盖。
-6. 目前加入了按键模拟翻页，使用之前请在模拟器中设置好按键和点按位置。
-7. 如果你的模拟器使用了管理员权限运行，那么建议也使用管理员权限运行python执行本程序。
-8. 如果运行OCR过程中提示缺少cudnn文件，可以参考[这篇文章](https://blog.csdn.net/weixin_44906810/article/details/128176194#:~:text=%E6%89%93%E5%BC%80%E9%87%8C%E9%9D%A2%E7%A1%AE%E5%AE%9E%E6%B2%A1%E6%9C%89cudnn64_8.dll%E6%96%87%E4%BB%B6%E3%80%82,%E7%84%B6%E5%90%8E%E6%88%91%E4%BB%AC%E9%9C%80%E8%A6%81%E5%8E%BB%E4%B8%8B%E8%BD%BD%E7%9A%84cudnn%E5%8E%8B%E7%BC%A9%E5%8C%85%E9%87%8C%E9%9D%A2%E6%89%BE%E8%BF%99%E4%B8%AA%E6%96%87%E4%BB%B6%EF%BC%8C%E5%B0%86%E5%8E%8B%E7%BC%A9%E5%8C%85%E8%A7%A3%E5%8E%8B%E6%89%93%E5%BC%80%EF%BC%8C%E5%90%8C%E6%A0%B7%E4%BC%9A%E6%9C%89bin%E6%96%87%E4%BB%B6%EF%BC%8C%E6%89%93%E5%BC%80bin%EF%BC%8C%E9%87%8C%E9%9D%A2%E5%B0%B1%E6%9C%89%E6%88%91%E4%BB%AC%E6%89%80%E9%9C%80%E7%9A%84cudnn64_8.dll%E6%96%87%E4%BB%B6)来解决。
-9. 程序运行时会占用大量内存，请确保计算机的可用内存大于10GB.
+- 项目已移除本地 PaddleOCR 代码和依赖，不再需要下载 OCR 模型或安装 Paddle。
+- 如果模拟器以管理员权限运行，Python/终端也可能需要管理员权限才能发送点击或按键。
+- 采集时不要遮挡阅读窗口；截图区域、点击坐标和翻页按键都应提前确认。
+- GUI 的后台采集使用线程执行，界面日志和进度通过主线程刷新；点击“停止采集”会在当前页 OCR 完成后退出。

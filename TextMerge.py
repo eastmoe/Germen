@@ -10,7 +10,7 @@ logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(leve
 
 #用于文件按照修改时间顺序排序的函数，参数是OCR输出路径
 def GetFileList(file_path):
-    dir_list = os.listdir(file_path)
+    dir_list = [file for file in os.listdir(file_path) if file.lower().endswith(".txt")]
     if not dir_list:
         logging.error(f"错误！配置的OCR输出目录{file_path}无文本文件！")
         print("错误！配置的OCR输出目录无文本文件！")
@@ -33,19 +33,17 @@ def Merge(file_list,dir_path,novelfile):
         print('OCR输出路径错误，程序将退出。')
         return "Error"
 
-    novel=open(novelfile,"w", encoding="utf-8")
-    #打开整本小说文件
-    for file in file_list:
-    #遍历文件列表
-        filepath=os.path.join(dir_path,file)
-        #目录路径+当前文件名组成完整路径
-        nextText=open(filepath, encoding="utf-8")
-        #打开下一个文本
-        novel.writelines(nextText)
-        #将数据每次按行写入
-        novel.write("\n")
-        #每写完一个文件，就换行
-    novel.close()
+    with open(novelfile, "w", encoding="utf-8") as novel:
+        #打开整本小说文件
+        for file in file_list:
+        #遍历文件列表
+            filepath=os.path.join(dir_path,file)
+            #目录路径+当前文件名组成完整路径
+            with open(filepath, encoding="utf-8") as nextText:
+                #打开下一个文本
+                novel.writelines(nextText)
+            #每写完一个文件，就换行
+            novel.write("\n")
     logging.info(f"合并成功，文件位于：{novelfile}")
     print("合并成功！文件位于",novelfile)
     return 0
