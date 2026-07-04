@@ -4,6 +4,8 @@
     "MergeBookDir": "./MergeText/",
     "FinalNovelDir": "./FinalBooks/",
     "Cycle": "10",
+    "ReadingDelayMin": "5",
+    "ReadingDelayMax": "45",
     "OCRBackend": "专用OCR路径",
     "OpenAIURL": "http://127.0.0.1:8080/v1",
     "OpenAIAPIKEY": "",

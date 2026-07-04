@@ -13,6 +13,8 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "MergeBookDir": "./MergeText/",
     "FinalNovelDir": "./FinalBooks/",
     "Cycle": "10",
+    "ReadingDelayMin": "5",
+    "ReadingDelayMax": "45",
     "OCRBackend": "通用VLM路径",
     "OpenAIURL": "https://api.openai.com/v1",
     "OpenAIAPIKEY": "",

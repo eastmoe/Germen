@@ -15,8 +15,8 @@ class GermenGUI(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.title("Germen OCR")
-        self.geometry("900x760")
-        self.minsize(840, 720)
+        self.geometry("940x820")
+        self.minsize(880, 760)
 
         self.config_data = load_config()
         self.queue: queue.Queue = queue.Queue()
@@ -29,6 +29,9 @@ class GermenGUI(tk.Tk):
         self.preview_photo = None
         self.preview_after_id = None
         self.preview_source = ""
+        self.adb_picker_window = None
+        self.adb_picker_photo = None
+        self.adb_picker_scale = 1.0
 
         self.vars = {
             key: tk.StringVar(value=str(self.config_data.get(key, DEFAULT_CONFIG.get(key, ""))))
@@ -146,7 +149,7 @@ class GermenGUI(tk.Tk):
         ttk.Label(capture_frame, text="翻页方式").grid(row=1, column=0, sticky="w", padx=8, pady=6)
         method_box = ttk.Combobox(
             capture_frame,
-            values=("模拟按键", "模拟点击", "音量下", "模拟点击学习"),
+            values=("模拟按键", "模拟点击", "音量下", "音量上", "ADB 模拟点击", "模拟点击学习"),
             textvariable=self.vars["PageMethod"],
             state="readonly",
             width=12,
@@ -166,6 +169,26 @@ class GermenGUI(tk.Tk):
         ttk.Label(capture_frame, text="周期秒").grid(row=1, column=6, sticky="e", padx=8, pady=6)
         ttk.Entry(capture_frame, textvariable=self.vars["Cycle"], width=10).grid(
             row=1, column=7, sticky="w", padx=8, pady=6
+        )
+
+        ttk.Label(capture_frame, text="阅读误差最小秒").grid(row=3, column=0, sticky="w", padx=8, pady=6)
+        ttk.Entry(capture_frame, textvariable=self.vars["ReadingDelayMin"], width=10).grid(
+            row=3, column=1, sticky="w", padx=8, pady=6
+        )
+
+        ttk.Label(capture_frame, text="阅读误差最大秒").grid(row=3, column=2, sticky="e", padx=8, pady=6)
+        ttk.Entry(capture_frame, textvariable=self.vars["ReadingDelayMax"], width=10).grid(
+            row=3, column=3, sticky="w", padx=8, pady=6
+        )
+
+        ttk.Label(capture_frame, text="ADB 点击 X").grid(row=4, column=0, sticky="w", padx=8, pady=6)
+        ttk.Entry(capture_frame, textvariable=self.vars["ADBTapX"], width=10).grid(
+            row=4, column=1, sticky="w", padx=8, pady=6
+        )
+
+        ttk.Label(capture_frame, text="ADB 点击 Y").grid(row=4, column=2, sticky="e", padx=8, pady=6)
+        ttk.Entry(capture_frame, textvariable=self.vars["ADBTapY"], width=10).grid(
+            row=4, column=3, sticky="w", padx=8, pady=6
         )
 
         ttk.Checkbutton(
@@ -195,6 +218,9 @@ class GermenGUI(tk.Tk):
         )
         ttk.Button(capture_frame, text="连接 ADB", command=self._connect_adb).grid(
             row=3, column=5, columnspan=3, sticky="ew", padx=8, pady=6
+        )
+        ttk.Button(capture_frame, text="ADB 截图点选", command=self._pick_adb_click_from_screenshot).grid(
+            row=4, column=5, columnspan=3, sticky="ew", padx=8, pady=6
         )
 
         action_frame = ttk.Frame(self)
@@ -448,6 +474,58 @@ class GermenGUI(tk.Tk):
 
         self._start_background("学习点击位置", task)
 
+    def _pick_adb_click_from_screenshot(self) -> None:
+        config = self._save_config_from_ui()
+
+        def task() -> None:
+            screenshot = workflow.capture_adb_screenshot(config, self._worker_callback)
+            self.queue.put(("adb_screenshot", "ADB 截屏已打开，请在图片上点击翻页位置。", screenshot))
+
+        self._start_background("ADB 截图点选", task)
+
+    def _open_adb_screenshot_picker(self, payload: dict) -> None:
+        try:
+            from PIL import Image, ImageTk
+        except ImportError as exc:
+            messagebox.showerror("打开失败", f"ADB 截图点选需要安装 pillow: {exc}")
+            return
+
+        path = Path(str(payload["path"]))
+        image = Image.open(path)
+        width, height = image.size
+        max_width, max_height = 820, 640
+        scale = min(max_width / width, max_height / height, 1.0)
+        display_size = (max(1, round(width * scale)), max(1, round(height * scale)))
+        display_image = image.resize(display_size, Image.LANCZOS) if scale < 1.0 else image.copy()
+
+        if self.adb_picker_window and self.adb_picker_window.winfo_exists():
+            self.adb_picker_window.destroy()
+
+        self.adb_picker_scale = scale
+        self.adb_picker_window = tk.Toplevel(self)
+        self.adb_picker_window.title(f"ADB 截图点选 - {payload.get('serial', '')}")
+        self.adb_picker_window.resizable(False, False)
+        frame = ttk.Frame(self.adb_picker_window)
+        frame.pack(fill="both", expand=True, padx=10, pady=10)
+        ttk.Label(frame, text="在图片中点击下一页位置，坐标会按手机原始分辨率保存。").pack(anchor="w", pady=(0, 8))
+        canvas = tk.Canvas(frame, width=display_size[0], height=display_size[1], highlightthickness=0)
+        canvas.pack()
+        self.adb_picker_photo = ImageTk.PhotoImage(display_image)
+        canvas.create_image(0, 0, image=self.adb_picker_photo, anchor="nw")
+
+        def select_point(event) -> None:
+            x = max(0, min(width - 1, round(event.x / self.adb_picker_scale)))
+            y = max(0, min(height - 1, round(event.y / self.adb_picker_scale)))
+            self.vars["PageMethod"].set("ADB 模拟点击")
+            self.vars["ADBTapX"].set(str(x))
+            self.vars["ADBTapY"].set(str(y))
+            self._save_config_from_ui()
+            self._log(f"已从 ADB 截图点选坐标: {x}, {y}")
+            if self.adb_picker_window and self.adb_picker_window.winfo_exists():
+                self.adb_picker_window.destroy()
+
+        canvas.bind("<Button-1>", select_point)
+
     def _open_config_file(self) -> None:
         os.startfile("config.json")
 
@@ -567,9 +645,15 @@ class GermenGUI(tk.Tk):
                 self._set_busy(False)
             elif kind == "adb_tap":
                 if payload:
+                    self.vars["PageMethod"].set("ADB 模拟点击")
                     self.vars["ADBTapX"].set(str(payload["x"]))
                     self.vars["ADBTapY"].set(str(payload["y"]))
                     self._save_config_from_ui()
+                self._set_busy(False)
+            elif kind == "adb_screenshot":
+                if payload:
+                    self._set_adb_selection_by_serial(str(payload["serial"]))
+                    self._open_adb_screenshot_picker(payload)
                 self._set_busy(False)
             elif kind == "done":
                 self._set_busy(False)
@@ -590,6 +674,8 @@ class GermenGUI(tk.Tk):
 
     def _on_close(self) -> None:
         self._close_input_preview()
+        if self.adb_picker_window and self.adb_picker_window.winfo_exists():
+            self.adb_picker_window.destroy()
         self.destroy()
 
 

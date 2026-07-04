@@ -1,4 +1,5 @@
 import glob
+import random
 import subprocess
 import sys
 import time
@@ -32,6 +33,16 @@ def find_latest_file(folder_path: str, file_type: str) -> Optional[str]:
     return None
 
 
+def random_reading_delay(config: Dict[str, Any]) -> tuple[float, float, float]:
+    cycle = max(0.0, float(config.get("Cycle") or 0))
+    minimum = max(0.0, float(config.get("ReadingDelayMin") or 0))
+    maximum = max(0.0, float(config.get("ReadingDelayMax") or 0))
+    if minimum > maximum:
+        minimum, maximum = maximum, minimum
+    jitter = random.uniform(minimum, maximum) if maximum > 0 or minimum > 0 else 0.0
+    return cycle + jitter, cycle, jitter
+
+
 def pin_foreground_window(callback: EventCallback = None) -> None:
     import win_input
 
@@ -54,7 +65,7 @@ def run_capture(
 
     picture_dir = resolve_path(str(config["PictureDir"]))
     ocr_dir = str(config["OCROutPaDir"])
-    cycle = float(config.get("Cycle") or 10)
+    random_reading_delay(config)
     total_pages = int(config.get("CapturePages") or 1)
     page_method = str(config.get("PageMethod") or "模拟按键")
     page_key = str(config.get("PageKey") or "n")
@@ -72,16 +83,16 @@ def run_capture(
         import Click
 
         click_module = Click
-    elif page_method in ("音量下", "音量上", "模拟点击学习"):
+    elif page_method in ("音量下", "音量上", "ADB 模拟点击", "模拟点击学习"):
         import adb_controller
 
         adb_module = adb_controller
         adb_serial = adb_module.connect(adb_serial)
         config["ADBSerial"] = adb_serial
         emit(callback, f"ADB 已连接: {adb_serial}")
-        if page_method == "模拟点击学习":
+        if page_method in ("ADB 模拟点击", "模拟点击学习"):
             if not str(config.get("ADBTapX") or "").strip() or not str(config.get("ADBTapY") or "").strip():
-                raise RuntimeError("还没有学习 ADB 点击坐标，请先点击“学习点击位置”。")
+                raise RuntimeError("还没有设置 ADB 点击坐标，请先手动填写、学习点击位置或从 ADB 截图点选。")
     else:
         import win_input
 
@@ -110,14 +121,23 @@ def run_capture(
             elif page_method == "音量上":
                 adb_module.keyevent(adb_serial, "KEYCODE_VOLUME_UP")
                 emit(callback, "已发送 ADB 音量上翻页。", page=page, total=total_pages)
-            elif page_method == "模拟点击学习":
+            elif page_method in ("ADB 模拟点击", "模拟点击学习"):
                 adb_module.tap(adb_serial, int(config["ADBTapX"]), int(config["ADBTapY"]))
                 emit(callback, f"已执行 ADB 点击翻页: {config['ADBTapX']}, {config['ADBTapY']}", page=page, total=total_pages)
             else:
                 win_input.press_and_release(page_key)
                 emit(callback, f"已发送翻页按键: {page_key}", page=page, total=total_pages)
 
-            end_at = time.time() + cycle
+            wait_seconds, cycle_seconds, jitter_seconds = random_reading_delay(config)
+            emit(
+                callback,
+                f"等待 {wait_seconds:.1f} 秒后继续（基础 {cycle_seconds:.1f} 秒，阅读误差 {jitter_seconds:.1f} 秒）。",
+                page=page,
+                total=total_pages,
+                wait_seconds=wait_seconds,
+                reading_delay=jitter_seconds,
+            )
+            end_at = time.time() + wait_seconds
             while time.time() < end_at:
                 if stop_event.is_set():
                     break
@@ -146,6 +166,20 @@ def learn_adb_tap(config: Optional[Dict[str, Any]] = None, callback: EventCallba
     x, y = adb_controller.learn_tap(serial, timeout)
     emit(callback, f"已学习 ADB 点击坐标: {x}, {y}", adb_serial=serial, x=x, y=y)
     return {"x": x, "y": y}
+
+
+def capture_adb_screenshot(config: Optional[Dict[str, Any]] = None, callback: EventCallback = None) -> Dict[str, Any]:
+    import adb_controller
+    from PIL import Image
+
+    config = config or load_config()
+    serial = adb_controller.connect(str(config.get("ADBSerial") or ""))
+    target = PROJECT_ROOT / "static" / "adb_screen.png"
+    image_path = adb_controller.screencap(serial, target)
+    with Image.open(image_path) as image:
+        width, height = image.size
+    emit(callback, f"ADB 截屏完成: {image_path}", adb_serial=serial, path=str(image_path), width=width, height=height)
+    return {"path": str(image_path), "serial": serial, "width": width, "height": height}
 
 
 def list_adb_devices() -> list[Dict[str, str]]:

@@ -4,6 +4,7 @@ import subprocess
 import threading
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, Optional, Tuple
 
 
@@ -49,6 +50,26 @@ def _run_adb(args: list[str], serial: str = "", timeout: float = 10) -> str:
         detail = (result.stderr or result.stdout or "").strip()
         raise ADBError(detail or f"adb 命令失败: {' '.join(args)}")
     return result.stdout.strip()
+
+
+def _run_adb_bytes(args: list[str], serial: str = "", timeout: float = 10) -> bytes:
+    try:
+        result = subprocess.run(
+            [*_adb_command(serial), *args],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=timeout,
+            check=False,
+        )
+    except FileNotFoundError as exc:
+        raise ADBError("未找到 adb，请确认 Android platform-tools 已加入 PATH。") from exc
+    except subprocess.TimeoutExpired as exc:
+        raise ADBError("adb 命令超时，请检查设备连接。") from exc
+
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or b"").decode("utf-8", errors="replace").strip()
+        raise ADBError(detail or f"adb 命令失败: {' '.join(args)}")
+    return result.stdout
 
 
 def _read_device_name(serial: str) -> str:
@@ -125,6 +146,20 @@ def screen_size(serial: str) -> Tuple[int, int]:
     if not match:
         raise ADBError(f"无法解析屏幕尺寸: {output}")
     return int(match.group(1)), int(match.group(2))
+
+
+def screencap(serial: str = "", output_path: str | Path = "") -> Path:
+    resolved = resolve_serial(serial)
+    image_data = _run_adb_bytes(["exec-out", "screencap", "-p"], serial=resolved, timeout=15)
+    if not image_data.startswith(b"\x89PNG"):
+        image_data = image_data.replace(b"\r\n", b"\n")
+    if not image_data.startswith(b"\x89PNG"):
+        raise ADBError("ADB 截屏没有返回有效 PNG 数据。")
+
+    target = Path(output_path) if output_path else Path("adb_screenshot.png")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(image_data)
+    return target
 
 
 def _touch_axis_ranges(serial: str) -> Dict[str, Dict[str, Tuple[int, int]]]:

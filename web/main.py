@@ -167,6 +167,7 @@ INDEX_HTML = r"""<!doctype html>
       border-radius: 6px;
       background: #f0f0f0;
     }
+    .pickable { cursor: crosshair; }
     .status-strip {
       display: grid;
       grid-template-columns: 1.4fr 1fr 1fr 1fr;
@@ -290,7 +291,7 @@ INDEX_HTML = r"""<!doctype html>
 
     <section class="panel step-panel hidden" data-step="2">
       <h2>3. 翻页方式</h2>
-      <p class="hint">音量键通过 ADB 发送；模拟点击会在服务器桌面上点击指定坐标。</p>
+      <p class="hint">音量键和 ADB 模拟点击会发给安卓设备；模拟点击会在服务器桌面上点击指定坐标。</p>
       <div class="grid">
         <div class="field">
           <label>方式</label>
@@ -298,18 +299,26 @@ INDEX_HTML = r"""<!doctype html>
             <option value="音量下">音量下</option>
             <option value="音量上">音量上</option>
             <option value="模拟点击">模拟点击</option>
+            <option value="ADB 模拟点击">ADB 模拟点击</option>
           </select>
         </div>
         <div class="field"><label>ADB 设备名称或 ID</label><input id="ADBSerial" list="adbOptions" placeholder="单设备可留空"><datalist id="adbOptions"></datalist></div>
-        <div class="field click-field"><label>点击 X</label><input id="ClickX" inputmode="numeric"></div>
-        <div class="field click-field"><label>点击 Y</label><input id="ClickY" inputmode="numeric"></div>
+        <div class="field click-field"><label>桌面点击 X</label><input id="ClickX" inputmode="numeric"></div>
+        <div class="field click-field"><label>桌面点击 Y</label><input id="ClickY" inputmode="numeric"></div>
+        <div class="field adb-tap-field"><label>ADB 点击 X</label><input id="ADBTapX" inputmode="numeric"></div>
+        <div class="field adb-tap-field"><label>ADB 点击 Y</label><input id="ADBTapY" inputmode="numeric"></div>
       </div>
       <div class="actions">
         <button id="scanAdbBtn" class="secondary">扫描 ADB 设备</button>
+        <button id="adbScreenshotBtn" class="secondary">截取 ADB 屏幕点选</button>
         <button data-save="page">保存翻页方式</button>
         <button id="testPageBtn" class="secondary">测试翻页</button>
       </div>
       <div id="pageResult" class="result hidden"></div>
+      <div class="preview hidden" id="adbScreenshotBox">
+        <img id="adbScreenshotImage" class="pickable" alt="ADB 设备屏幕截图">
+        <div class="notice">点击截图中的下一页位置，WebUI 会按安卓设备原始屏幕分辨率填入 ADB 点击坐标。</div>
+      </div>
     </section>
 
     <section class="panel step-panel hidden" data-step="3">
@@ -322,6 +331,8 @@ INDEX_HTML = r"""<!doctype html>
         <div class="field"><label>最终文本目录</label><input id="FinalNovelDir"></div>
         <div class="field"><label>采集页数</label><input id="CapturePages" inputmode="numeric"></div>
         <div class="field"><label>翻页后等待秒数</label><input id="Cycle" inputmode="decimal"></div>
+        <div class="field"><label>阅读误差最小秒</label><input id="ReadingDelayMin" inputmode="decimal"></div>
+        <div class="field"><label>阅读误差最大秒</label><input id="ReadingDelayMax" inputmode="decimal"></div>
       </div>
       <div class="actions">
         <label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--ink)">
@@ -366,6 +377,7 @@ INDEX_HTML = r"""<!doctype html>
     let config = {};
     let inputSources = [];
     let adbDevices = [];
+    let adbScreenshotMeta = null;
 
     const $ = id => document.getElementById(id);
     const api = async (path, options = {}) => {
@@ -416,7 +428,8 @@ INDEX_HTML = r"""<!doctype html>
       ["OCRBackend", "OpenAIURL", "OpenAIOCRModel", "OpenAIRequestTimeout", "OpenAIMaxOutputTokens",
        "OpenAIOCRPrompt",
        "InputSource", "InputSourceWarmupFrames", "PageMethod", "ADBSerial", "PictureDir", "OCROutPaDir",
-       "MergeBookDir", "FinalNovelDir", "CapturePages", "Cycle"].forEach(key => {
+       "MergeBookDir", "FinalNovelDir", "CapturePages", "Cycle", "ReadingDelayMin", "ReadingDelayMax",
+       "ADBTapX", "ADBTapY"].forEach(key => {
         if ($(key)) $(key).value = config[key] ?? "";
       });
       $("apiKeyState").value = data.apiKeySet ? "已配置" : "未配置";
@@ -486,8 +499,12 @@ INDEX_HTML = r"""<!doctype html>
 
     function updatePageFields() {
       const click = $("PageMethod").value === "模拟点击";
+      const adbTap = $("PageMethod").value === "ADB 模拟点击";
       document.querySelectorAll(".click-field").forEach(item => item.classList.toggle("hidden", !click));
+      document.querySelectorAll(".adb-tap-field").forEach(item => item.classList.toggle("hidden", !adbTap));
       $("ADBSerial").closest(".field").classList.toggle("hidden", click);
+      $("adbScreenshotBtn").classList.toggle("hidden", !adbTap);
+      if (!adbTap) $("adbScreenshotBox").classList.add("hidden");
     }
 
     function applyOcrBackendDefaults(initial = false) {
@@ -531,7 +548,9 @@ INDEX_HTML = r"""<!doctype html>
             PageMethod: $("PageMethod").value,
             ADBSerial: selectedAdbSerial(),
             ClickX: $("ClickX").value,
-            ClickY: $("ClickY").value
+            ClickY: $("ClickY").value,
+            ADBTapX: $("ADBTapX").value,
+            ADBTapY: $("ADBTapY").value
           },
           dirs: {
             PictureDir: $("PictureDir").value,
@@ -539,7 +558,9 @@ INDEX_HTML = r"""<!doctype html>
             MergeBookDir: $("MergeBookDir").value,
             FinalNovelDir: $("FinalNovelDir").value,
             CapturePages: $("CapturePages").value,
-            Cycle: $("Cycle").value
+            Cycle: $("Cycle").value,
+            ReadingDelayMin: $("ReadingDelayMin").value,
+            ReadingDelayMax: $("ReadingDelayMax").value
           }
         };
         await api(`/api/config/${section}`, {method: "POST", body: JSON.stringify(payloads[section])});
@@ -645,6 +666,34 @@ INDEX_HTML = r"""<!doctype html>
         setBusy(event.target, false);
       }
     };
+    $("adbScreenshotBtn").onclick = async event => {
+      setBusy(event.target, true);
+      try {
+        const data = await api("/api/adb-screenshot", {method: "POST", body: JSON.stringify({
+          ADBSerial: selectedAdbSerial()
+        })});
+        adbScreenshotMeta = data;
+        $("ADBSerial").value = data.serial || $("ADBSerial").value;
+        $("adbScreenshotImage").src = data.dataUrl;
+        $("adbScreenshotBox").classList.remove("hidden");
+        showResult("pageResult", "ADB 截屏完成，请在图片上点击下一页位置。");
+      } catch (error) {
+        showResult("pageResult", error.message, true);
+      } finally {
+        setBusy(event.target, false);
+      }
+    };
+    $("adbScreenshotImage").onclick = event => {
+      const image = $("adbScreenshotImage");
+      const rect = image.getBoundingClientRect();
+      const naturalWidth = image.naturalWidth || adbScreenshotMeta?.width || 1;
+      const naturalHeight = image.naturalHeight || adbScreenshotMeta?.height || 1;
+      const x = Math.max(0, Math.min(naturalWidth - 1, Math.round((event.clientX - rect.left) * naturalWidth / rect.width)));
+      const y = Math.max(0, Math.min(naturalHeight - 1, Math.round((event.clientY - rect.top) * naturalHeight / rect.height)));
+      $("ADBTapX").value = x;
+      $("ADBTapY").value = y;
+      showResult("pageResult", `已选择 ADB 点击坐标: ${x}, ${y}`);
+    };
     $("previewBtn").onclick = async event => {
       setBusy(event.target, true);
       try {
@@ -667,7 +716,9 @@ INDEX_HTML = r"""<!doctype html>
           PageMethod: $("PageMethod").value,
           ADBSerial: selectedAdbSerial(),
           ClickX: $("ClickX").value,
-          ClickY: $("ClickY").value
+          ClickY: $("ClickY").value,
+          ADBTapX: $("ADBTapX").value,
+          ADBTapY: $("ADBTapY").value
         })});
         const data = await api("/api/test-page", {method: "POST", body: "{}"});
         showResult("pageResult", data.message);
@@ -848,13 +899,20 @@ def handle_config_section(section: str, payload: Dict[str, Any]) -> Dict[str, An
 
     if section == "page":
         method = str(payload.get("PageMethod") or "音量下")
-        if method not in ("音量下", "音量上", "模拟点击"):
-            raise ValueError("WebUI 只支持音量上、音量下或模拟点击翻页。")
+        if method not in ("音量下", "音量上", "模拟点击", "ADB 模拟点击"):
+            raise ValueError("WebUI 只支持音量上、音量下、模拟点击或 ADB 模拟点击翻页。")
+        updates = {"PageMethod": method, "ADBSerial": payload.get("ADBSerial", "")}
         if method == "模拟点击":
             x = int(str(payload.get("ClickX") or "").strip())
             y = int(str(payload.get("ClickY") or "").strip())
             save_click_plot(x, y)
-        merge_config({"PageMethod": method, "ADBSerial": payload.get("ADBSerial", "")})
+        elif method == "ADB 模拟点击":
+            x = int(str(payload.get("ADBTapX") or "").strip())
+            y = int(str(payload.get("ADBTapY") or "").strip())
+            if x < 0 or y < 0:
+                raise ValueError("ADB 点击坐标不能为负数。")
+            updates.update({"ADBTapX": x, "ADBTapY": y})
+        merge_config(updates)
         return public_config()
 
     if section == "dirs":
@@ -865,10 +923,19 @@ def handle_config_section(section: str, payload: Dict[str, Any]) -> Dict[str, An
             "FinalNovelDir",
             "CapturePages",
             "Cycle",
+            "ReadingDelayMin",
+            "ReadingDelayMax",
         }
-        config = merge_config({key: payload.get(key, "") for key in allowed if key in payload})
-        int(config.get("CapturePages") or 1)
-        float(config.get("Cycle") or 1)
+        updates = {key: payload.get(key, "") for key in allowed if key in payload}
+        preview = load_config()
+        preview.update({key: str(value) for key, value in updates.items()})
+        int(preview.get("CapturePages") or 1)
+        float(preview.get("Cycle") or 1)
+        minimum = float(preview.get("ReadingDelayMin") or 0)
+        maximum = float(preview.get("ReadingDelayMax") or 0)
+        if minimum < 0 or maximum < 0:
+            raise ValueError("阅读误差秒数不能为负数。")
+        merge_config(updates)
         return public_config()
 
     raise ValueError(f"未知配置步骤: {section}")
@@ -1081,6 +1148,27 @@ class WebUIHandler(BaseHTTPRequestHandler):
                 image_path = frame_sources.capture_input_source(preview_dir, source, warmup)
                 self.send_json({"ok": True, "dataUrl": read_image_data_url(image_path), "path": str(image_path)})
                 return
+            if path == "/api/adb-screenshot":
+                import workflow
+
+                config = load_config()
+                if "ADBSerial" in payload:
+                    config["ADBSerial"] = str(payload.get("ADBSerial") or "")
+                screenshot = workflow.capture_adb_screenshot(config)
+                config["ADBSerial"] = screenshot["serial"]
+                save_config(config)
+                image_path = Path(str(screenshot["path"]))
+                self.send_json(
+                    {
+                        "ok": True,
+                        "dataUrl": read_image_data_url(image_path),
+                        "path": str(image_path),
+                        "serial": screenshot["serial"],
+                        "width": screenshot["width"],
+                        "height": screenshot["height"],
+                    }
+                )
+                return
             if path == "/api/test-page":
                 config = load_config()
                 method = str(config.get("PageMethod") or "音量下")
@@ -1093,6 +1181,14 @@ class WebUIHandler(BaseHTTPRequestHandler):
                 import adb_controller
 
                 serial = adb_controller.connect(str(config.get("ADBSerial") or ""))
+                if method == "ADB 模拟点击":
+                    x = int(str(config.get("ADBTapX") or "").strip())
+                    y = int(str(config.get("ADBTapY") or "").strip())
+                    adb_controller.tap(serial, x, y)
+                    config["ADBSerial"] = serial
+                    save_config(config)
+                    self.send_json({"ok": True, "message": f"已向 {serial} 发送 ADB 点击: {x}, {y}。"})
+                    return
                 key = "KEYCODE_VOLUME_UP" if method == "音量上" else "KEYCODE_VOLUME_DOWN"
                 adb_controller.keyevent(serial, key)
                 config["ADBSerial"] = serial
