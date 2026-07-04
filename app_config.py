@@ -32,6 +32,9 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "PageMethod": "模拟按键",
     "PageKey": "n",
     "CapturePages": "100",
+    "WebUIHost": "127.0.0.1",
+    "WebUIPort": "7860",
+    "WebUIPassword": "germen",
 }
 
 

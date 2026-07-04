@@ -72,7 +72,7 @@ def run_capture(
         import Click
 
         click_module = Click
-    elif page_method in ("音量下", "模拟点击学习"):
+    elif page_method in ("音量下", "音量上", "模拟点击学习"):
         import adb_controller
 
         adb_module = adb_controller
@@ -107,6 +107,9 @@ def run_capture(
             elif page_method == "音量下":
                 adb_module.keyevent(adb_serial, "KEYCODE_VOLUME_DOWN")
                 emit(callback, "已发送 ADB 音量下翻页。", page=page, total=total_pages)
+            elif page_method == "音量上":
+                adb_module.keyevent(adb_serial, "KEYCODE_VOLUME_UP")
+                emit(callback, "已发送 ADB 音量上翻页。", page=page, total=total_pages)
             elif page_method == "模拟点击学习":
                 adb_module.tap(adb_serial, int(config["ADBTapX"]), int(config["ADBTapY"]))
                 emit(callback, f"已执行 ADB 点击翻页: {config['ADBTapX']}, {config['ADBTapY']}", page=page, total=total_pages)
