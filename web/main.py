@@ -243,11 +243,18 @@ INDEX_HTML = r"""<!doctype html>
 
     <section class="panel step-panel" data-step="0">
       <h2>1. API</h2>
-      <p class="hint">保存 OpenAI 兼容接口配置后，可以用项目内置的 `static\sample.png` 做一次 OCR 测试。</p>
+      <p class="hint">保存 OCR 接口配置后，可以用项目内置的 `static\sample.png` 做一次 OCR 测试。</p>
       <div class="grid">
+        <div class="field">
+          <label>OCR 路径</label>
+          <select id="OCRBackend">
+            <option value="通用VLM路径">通用 VLM 路径</option>
+            <option value="专用OCR路径">专用 OCR 路径</option>
+          </select>
+        </div>
         <div class="field"><label>API Base URL</label><input id="OpenAIURL"></div>
         <div class="field"><label>API Key</label><input id="OpenAIAPIKEY" type="password" placeholder="留空表示保留已有密钥"></div>
-        <div class="field"><label>视觉模型</label><input id="OpenAIOCRModel"></div>
+        <div class="field"><label>OCR 模型</label><input id="OpenAIOCRModel"></div>
         <div class="field"><label>请求超时秒数</label><input id="OpenAIRequestTimeout" inputmode="numeric"></div>
         <div class="field"><label>最大输出 Token</label><input id="OpenAIMaxOutputTokens" inputmode="numeric"></div>
         <div class="field"><label>当前密钥状态</label><input id="apiKeyState" disabled></div>
@@ -348,6 +355,11 @@ INDEX_HTML = r"""<!doctype html>
 
   <script>
     const stepNames = ["API", "图像输入源", "翻页方式", "保存目录", "开始获取"];
+    const genericOcrUrl = "https://api.openai.com/v1";
+    const localDedicatedOcrUrl = "http://127.0.0.1:8080/v1";
+    const genericOcrModel = "gpt-4.1-mini";
+    const dedicatedOcrModel = "Unlimited-OCR";
+    const genericOcrPrompt = "请对这张小说页面截图进行 OCR。只输出图片中可见的正文文本，保留自然换行，不要解释、不要总结、不要添加图片中不存在的内容。";
     let currentStep = 0;
     let savedSteps = new Set();
     let config = {};
@@ -398,7 +410,8 @@ INDEX_HTML = r"""<!doctype html>
 
     function fillConfig(data) {
       config = data.config || {};
-      ["OpenAIURL", "OpenAIOCRModel", "OpenAIRequestTimeout", "OpenAIMaxOutputTokens", "OpenAIOCRPrompt",
+      ["OCRBackend", "OpenAIURL", "OpenAIOCRModel", "OpenAIRequestTimeout", "OpenAIMaxOutputTokens",
+       "OpenAIOCRPrompt",
        "InputSource", "InputSourceWarmupFrames", "PageMethod", "ADBSerial", "PictureDir", "OCROutPaDir",
        "MergeBookDir", "FinalNovelDir", "CapturePages", "Cycle"].forEach(key => {
         if ($(key)) $(key).value = config[key] ?? "";
@@ -408,6 +421,7 @@ INDEX_HTML = r"""<!doctype html>
       $("ClickY").value = data.clickPlot?.y ?? "";
       renderRuntime(data.runtime);
       updatePageFields();
+      applyOcrBackendDefaults(true);
     }
 
     function renderRuntime(runtime) {
@@ -441,8 +455,24 @@ INDEX_HTML = r"""<!doctype html>
       $("ADBSerial").closest(".field").classList.toggle("hidden", click);
     }
 
+    function applyOcrBackendDefaults(initial = false) {
+      const dedicated = $("OCRBackend").value === "专用OCR路径";
+      const model = $("OpenAIOCRModel").value.trim();
+      const prompt = $("OpenAIOCRPrompt").value.trim();
+      if (dedicated) {
+        if (!initial || !model || model === genericOcrModel) $("OpenAIOCRModel").value = dedicatedOcrModel;
+        if (!$("OpenAIURL").value.trim() || $("OpenAIURL").value.trim() === genericOcrUrl) $("OpenAIURL").value = localDedicatedOcrUrl;
+        if (prompt) $("OpenAIOCRPrompt").value = "";
+      } else {
+        if (model === dedicatedOcrModel) $("OpenAIOCRModel").value = genericOcrModel;
+        if (!prompt) $("OpenAIOCRPrompt").value = genericOcrPrompt;
+      }
+    }
+
     function apiPayload() {
+      applyOcrBackendDefaults(true);
       return {
+        OCRBackend: $("OCRBackend").value,
         OpenAIURL: $("OpenAIURL").value,
         OpenAIAPIKEY: $("OpenAIAPIKEY").value,
         OpenAIOCRModel: $("OpenAIOCRModel").value,
@@ -526,6 +556,7 @@ INDEX_HTML = r"""<!doctype html>
       button.onclick = () => saveSection(button.dataset.save, button);
     });
     $("PageMethod").onchange = updatePageFields;
+    $("OCRBackend").onchange = () => applyOcrBackendDefaults();
     $("testApiBtn").onclick = async event => {
       setBusy(event.target, true);
       showResult("apiResult", "正在使用 static\\sample.png 测试 OCR...");
@@ -724,6 +755,7 @@ def merge_config(updates: Dict[str, Any], keep_empty_api_key: bool = False) -> D
 def handle_config_section(section: str, payload: Dict[str, Any]) -> Dict[str, Any]:
     if section == "api":
         allowed = {
+            "OCRBackend",
             "OpenAIURL",
             "OpenAIAPIKEY",
             "OpenAIOCRModel",
@@ -731,7 +763,14 @@ def handle_config_section(section: str, payload: Dict[str, Any]) -> Dict[str, An
             "OpenAIMaxOutputTokens",
             "OpenAIOCRPrompt",
         }
-        merge_config({key: payload.get(key, "") for key in allowed if key in payload}, keep_empty_api_key=True)
+        updates = {key: payload.get(key, "") for key in allowed if key in payload}
+        if str(updates.get("OCRBackend") or "").strip() == "专用OCR路径":
+            if not str(updates.get("OpenAIOCRModel") or "").strip() or updates.get("OpenAIOCRModel") == DEFAULT_CONFIG["OpenAIOCRModel"]:
+                updates["OpenAIOCRModel"] = "Unlimited-OCR"
+            if str(updates.get("OpenAIURL") or "").strip() in ("", str(DEFAULT_CONFIG["OpenAIURL"])):
+                updates["OpenAIURL"] = "http://127.0.0.1:8080/v1"
+            updates["OpenAIOCRPrompt"] = ""
+        merge_config(updates, keep_empty_api_key=True)
         return public_config()
 
     if section == "input":

@@ -44,7 +44,7 @@ class GermenGUI(tk.Tk):
         self.columnconfigure(0, weight=1)
         self.rowconfigure(3, weight=1)
 
-        config_frame = ttk.LabelFrame(self, text="路径与 OpenAI 配置")
+        config_frame = ttk.LabelFrame(self, text="路径与 OCR 配置")
         config_frame.grid(row=0, column=0, sticky="ew", padx=12, pady=(12, 8))
         config_frame.columnconfigure(1, weight=1)
 
@@ -63,6 +63,17 @@ class GermenGUI(tk.Tk):
                 row=row, column=2, padx=8, pady=5
             )
 
+        backend_row = len(path_fields)
+        ttk.Label(config_frame, text="OCR 路径").grid(row=backend_row, column=0, sticky="w", padx=8, pady=5)
+        backend_box = ttk.Combobox(
+            config_frame,
+            values=("通用VLM路径", "专用OCR路径"),
+            textvariable=self.vars["OCRBackend"],
+            state="readonly",
+        )
+        backend_box.grid(row=backend_row, column=1, columnspan=2, sticky="ew", padx=8, pady=5)
+        backend_box.bind("<<ComboboxSelected>>", lambda _event: self._apply_ocr_backend_defaults())
+
         api_fields = [
             ("OpenAI Base URL", "OpenAIURL"),
             ("OpenAI API Key", "OpenAIAPIKEY"),
@@ -70,18 +81,19 @@ class GermenGUI(tk.Tk):
             ("请求超时秒", "OpenAIRequestTimeout"),
             ("最大输出 tokens", "OpenAIMaxOutputTokens"),
         ]
-        for offset, (label, key) in enumerate(api_fields, start=len(path_fields)):
+        for offset, (label, key) in enumerate(api_fields, start=backend_row + 1):
             ttk.Label(config_frame, text=label).grid(row=offset, column=0, sticky="w", padx=8, pady=5)
             show = "*" if key == "OpenAIAPIKEY" else ""
             ttk.Entry(config_frame, textvariable=self.vars[key], show=show).grid(
                 row=offset, column=1, columnspan=2, sticky="ew", padx=8, pady=5
             )
 
-        prompt_row = len(path_fields) + len(api_fields)
+        prompt_row = backend_row + 1 + len(api_fields)
         ttk.Label(config_frame, text="OCR 提示词").grid(row=prompt_row, column=0, sticky="nw", padx=8, pady=5)
         self.prompt_text = tk.Text(config_frame, height=3, wrap="word")
         self.prompt_text.insert("1.0", self.vars["OpenAIOCRPrompt"].get())
         self.prompt_text.grid(row=prompt_row, column=1, columnspan=2, sticky="ew", padx=8, pady=5)
+        self._apply_ocr_backend_defaults(initial=True)
 
         capture_frame = ttk.LabelFrame(self, text="采集控制")
         capture_frame.grid(row=1, column=0, sticky="ew", padx=12, pady=8)
@@ -210,9 +222,46 @@ class GermenGUI(tk.Tk):
         if selected:
             self.vars[key].set(selected)
 
+    def _is_dedicated_backend(self) -> bool:
+        return self.vars["OCRBackend"].get() == "专用OCR路径"
+
+    def _set_prompt_text(self, value: str) -> None:
+        self.prompt_text.delete("1.0", "end")
+        self.prompt_text.insert("1.0", value)
+
+    def _apply_ocr_backend_defaults(self, initial: bool = False) -> None:
+        model = self.vars["OpenAIOCRModel"].get().strip()
+        prompt = self.prompt_text.get("1.0", "end").strip()
+        default_model = str(DEFAULT_CONFIG["OpenAIOCRModel"])
+        default_prompt = str(DEFAULT_CONFIG["OpenAIOCRPrompt"])
+
+        if self._is_dedicated_backend():
+            if not initial or model == default_model or not model:
+                self.vars["OpenAIOCRModel"].set("Unlimited-OCR")
+            if self.vars["OpenAIURL"].get().strip() in ("", str(DEFAULT_CONFIG["OpenAIURL"])):
+                self.vars["OpenAIURL"].set("http://127.0.0.1:8080/v1")
+            if prompt:
+                self._set_prompt_text("")
+            return
+
+        if model == "Unlimited-OCR":
+            self.vars["OpenAIOCRModel"].set(default_model)
+        if not prompt:
+            self._set_prompt_text(default_prompt)
+
     def _read_ui_config(self) -> dict:
         config = {key: var.get() for key, var in self.vars.items()}
         config["OpenAIOCRPrompt"] = self.prompt_text.get("1.0", "end").strip()
+        if config.get("OCRBackend") == "专用OCR路径":
+            if not str(config.get("OpenAIOCRModel") or "").strip() or config.get("OpenAIOCRModel") == DEFAULT_CONFIG["OpenAIOCRModel"]:
+                config["OpenAIOCRModel"] = "Unlimited-OCR"
+                self.vars["OpenAIOCRModel"].set("Unlimited-OCR")
+            if str(config.get("OpenAIURL") or "").strip() in ("", str(DEFAULT_CONFIG["OpenAIURL"])):
+                config["OpenAIURL"] = "http://127.0.0.1:8080/v1"
+                self.vars["OpenAIURL"].set(config["OpenAIURL"])
+            config["OpenAIOCRPrompt"] = ""
+            if self.prompt_text.get("1.0", "end").strip():
+                self._set_prompt_text("")
         return config
 
     def _save_config_from_ui(self) -> dict:

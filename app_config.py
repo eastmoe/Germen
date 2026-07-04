@@ -13,6 +13,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "MergeBookDir": "./MergeText/",
     "FinalNovelDir": "./FinalBooks/",
     "Cycle": "10",
+    "OCRBackend": "通用VLM路径",
     "OpenAIURL": "https://api.openai.com/v1",
     "OpenAIAPIKEY": "",
     "OpenAIOCRModel": "gpt-4.1-mini",
@@ -22,6 +23,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "请对这张小说页面截图进行 OCR。只输出图片中可见的正文文本，保留自然换行，"
         "不要解释、不要总结、不要添加图片中不存在的内容。"
     ),
+    "DedicatedOCRStripCoordinates": "true",
     "CaptureSource": "屏幕区域",
     "InputSource": "0",
     "InputSourceWarmupFrames": "5",
