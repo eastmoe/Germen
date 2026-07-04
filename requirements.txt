@@ -1,12 +1,6 @@
-future~=1.0.0
 numpy~=1.24.2
 pyautogui~=0.9.53
-psutil~=5.9.8
 pillow~=10.2.0
 keyboard~=0.13.5
-click~=8.1.7
-pympler~=1.0.1
-requests~=2.28.2
-opencv-python~=4.6.0.66
 openai>=1.76.0
 pywin32>=306
