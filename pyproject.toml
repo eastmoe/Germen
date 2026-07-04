@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "germen"
+version = "0.2.2"
+description = "Personal Android novel OCR extraction tool."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+dependencies = [
+    "pillow",
+    "openai>=1.76.0",
+    "opencv-python",
+]
+
+[project.optional-dependencies]
+tools = [
+    "opencc-python-reimplemented",
+    "psutil",
+    "pympler",
+]
+legacy = [
+    "streamlit",
+    "mss",
+]
+dev = [
+    "pytest",
+]
+
+[project.scripts]
+germen = "germen.main_program:main"
+germen-gui = "germen.gui:main"
+germen-web = "germen.web.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

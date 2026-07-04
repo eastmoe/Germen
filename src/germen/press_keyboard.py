@@ -3,10 +3,12 @@
 
 import logging
 
+from .log_utils import LOG_DIR
+
 # 设置日志
 logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
                     level=logging.INFO,
-                    filename='./log/input.log',
+                    filename=LOG_DIR / 'input.log',
                     filemode='a')
 
 #函数，作用是获取用户设置的自定义按键

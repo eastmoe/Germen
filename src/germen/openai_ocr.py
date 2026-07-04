@@ -9,8 +9,8 @@ from typing import Any, Dict, Optional
 
 from openai import OpenAI
 
-from app_config import DEFAULT_CONFIG, load_config, resolve_path
-from log_utils import get_logger
+from .app_config import DEFAULT_CONFIG, load_config, resolve_path
+from .log_utils import get_logger
 
 
 logger = get_logger("germen.openai_ocr", "ocr.log")

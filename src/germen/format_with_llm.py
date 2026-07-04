@@ -4,15 +4,18 @@ import os
 
 from openai import OpenAI
 
+from .app_config import CONFIG_PATH
+from .log_utils import LOG_DIR
+
 # 设置日志
 logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
                     level=logging.DEBUG,
-                    filename='./log/ai.log',
+                    filename=LOG_DIR / 'ai.log',
                     filemode='a')
 
 
 def _load_openai_settings():
-    with open("config.json", encoding='utf-8-sig') as config:
+    with CONFIG_PATH.open(encoding='utf-8-sig') as config:
         config_info = json.load(config)
     openai_url = config_info.get("OpenAIURL", "https://api.openai.com/v1")
     llm_model = config_info.get("LLMmodelName", config_info.get("OpenAIOCRModel", "gpt-4.1-mini"))

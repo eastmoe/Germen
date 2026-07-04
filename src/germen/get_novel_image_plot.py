@@ -3,12 +3,13 @@ import tkinter as tk
 import logging
 #from tkinter import messagebox
 
-from coordinates import save_image_plot
+from .coordinates import save_image_plot
+from .log_utils import LOG_DIR
 
 # 设置日志
 logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
                     level=logging.DEBUG,
-                    filename='./log/click.log',
+                    filename=LOG_DIR / 'click.log',
                     filemode='a')
 
 print('请选取小说的阅读页面，不需要包含边框，建议提高对比度以改善OCR文字识别效率。')

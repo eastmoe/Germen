@@ -7,8 +7,8 @@ from pathlib import Path
 from tkinter import filedialog, messagebox, scrolledtext
 from tkinter import ttk
 
-from app_config import DEFAULT_CONFIG, load_config, resolve_path, save_config
-import workflow
+from . import workflow
+from .app_config import DEFAULT_CONFIG, PROJECT_ROOT, load_config, resolve_path, save_config
 
 
 class GermenGUI(tk.Tk):
@@ -338,10 +338,10 @@ class GermenGUI(tk.Tk):
         return config
 
     def _select_image_area(self) -> None:
-        self._start_background("选择截图区域", lambda: workflow.run_helper("GetNovelImagePlot.py"))
+        self._start_background("选择截图区域", lambda: workflow.run_helper("get_novel_image_plot"))
 
     def _select_click_point(self) -> None:
-        self._start_background("选择点击坐标", lambda: workflow.run_helper("GetClickPlot.py"))
+        self._start_background("选择点击坐标", lambda: workflow.run_helper("get_click_plot"))
 
     def _scan_input_sources(self) -> None:
         try:
@@ -391,8 +391,9 @@ class GermenGUI(tk.Tk):
 
         try:
             import cv2
-            import frame_sources
             from PIL import Image, ImageTk
+
+            from . import frame_sources
         except ImportError as exc:
             messagebox.showerror("预览失败", f"使用图像输入源预览需要安装 opencv-python 和 pillow: {exc}")
             return
@@ -527,7 +528,7 @@ class GermenGUI(tk.Tk):
         canvas.bind("<Button-1>", select_point)
 
     def _open_config_file(self) -> None:
-        os.startfile("config.json")
+        os.startfile(PROJECT_ROOT / "config.json")
 
     def _clear_ocr_text(self) -> None:
         if not messagebox.askyesno("确认", "确认删除 OCR 文本目录里的所有 txt 文件吗？"):
@@ -679,5 +680,9 @@ class GermenGUI(tk.Tk):
         self.destroy()
 
 
-if __name__ == "__main__":
+def main() -> None:
     GermenGUI().mainloop()
+
+
+if __name__ == "__main__":
+    main()

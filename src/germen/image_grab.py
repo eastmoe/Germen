@@ -4,12 +4,13 @@ import time
 import os
 import logging
 
-from coordinates import load_image_plot
+from .coordinates import load_image_plot
+from .log_utils import LOG_DIR
 
 # 设置日志
 logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
                     level=logging.DEBUG,
-                    filename='./log/grab.log',
+                    filename=LOG_DIR / 'grab.log',
                     filemode='a')
 
 

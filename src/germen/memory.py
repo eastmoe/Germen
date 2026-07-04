@@ -1,18 +1,20 @@
 #查询内训占用的程序
-import psutil
 import inspect
 import sys
-from pympler import asizeof, muppy,summary
 import logging
+
+from .log_utils import LOG_DIR
 
 # 设置日志
 logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
                     level=logging.INFO,
-                    filename='./log/performance.log',
+                    filename=LOG_DIR / 'performance.log',
                     filemode='a')
 
 
 def ShowMemoryUse():
+    import psutil
+
     # 获取当前进程的内存信息
     p = psutil.Process()
     m = p.memory_info()
@@ -53,6 +55,8 @@ def ShowMemoryUse():
 
 # 输出list对象的名称和大小
 def PrintListMemory():
+    from pympler import asizeof
+
     # 获取当前模块的所有成员
     all_members = inspect.getmembers(sys.modules[__name__])
     # 遍历每个成员
@@ -65,6 +69,8 @@ def PrintListMemory():
 
 # 显示各种类型对象的内存占用
 def ShowMemoryType():
+    from pympler import muppy, summary
+
     # 使用muppy.get_objects()来获取所有活跃的Python对象
     object = muppy.get_objects()
     # 使用summary.summarize(objects)来对对象进行分类和统计，返回一个列表，每个元素包含了类型、数量和总大小4
@@ -73,5 +79,6 @@ def ShowMemoryType():
     logging.debug(f"内存使用情况:{summary_list}")
     summary.print_(summary_list)
 
-ShowMemoryType()
-#ShowMemoryUse()
+if __name__ == "__main__":
+    ShowMemoryType()
+    # ShowMemoryUse()

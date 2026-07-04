@@ -2,10 +2,12 @@
 import os
 import logging
 
+from .log_utils import LOG_DIR
+
 # 设置日志
 logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
                     level=logging.DEBUG,
-                    filename='./log/text.log',
+                    filename=LOG_DIR / 'text.log',
                     filemode='a')
 
 #用于文件按照修改时间顺序排序的函数，参数是OCR输出路径

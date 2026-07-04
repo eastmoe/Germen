@@ -14,12 +14,8 @@ from typing import Any, Dict, Optional
 from urllib.parse import unquote, urlparse
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
-from app_config import DEFAULT_CONFIG, ensure_project_dirs, load_config, save_config
-from coordinates import save_click_plot
+from ..app_config import DEFAULT_CONFIG, PROJECT_ROOT, ensure_project_dirs, load_config, save_config
+from ..coordinates import save_click_plot
 
 
 SESSION_COOKIE = "germen_webui_session"
@@ -943,7 +939,7 @@ def handle_config_section(section: str, payload: Dict[str, Any]) -> Dict[str, An
 
 def run_task(auto_merge: bool) -> None:
     global STOP_EVENT
-    import workflow
+    from .. import workflow
 
     config = load_config()
     config["CaptureSource"] = "图像输入源"
@@ -1062,7 +1058,7 @@ class WebUIHandler(BaseHTTPRequestHandler):
             if path == "/api/input-sources":
                 if not self.require_auth():
                     return
-                import workflow
+                from .. import workflow
 
                 query = dict(item.split("=", 1) for item in parsed.query.split("&") if "=" in item)
                 max_index = int(query.get("max") or 8)
@@ -1071,7 +1067,7 @@ class WebUIHandler(BaseHTTPRequestHandler):
             if path == "/api/adb-devices":
                 if not self.require_auth():
                     return
-                import workflow
+                from .. import workflow
 
                 self.send_json({"ok": True, "devices": workflow.list_adb_devices()})
                 return
@@ -1130,16 +1126,16 @@ class WebUIHandler(BaseHTTPRequestHandler):
                 self.send_json(handle_config_section(section, payload))
                 return
             if path == "/api/test-api":
-                import OpenAIOCR
+                from .. import openai_ocr
 
                 sample = PROJECT_ROOT / "static" / "sample.png"
                 if not sample.exists():
                     raise FileNotFoundError("static\\sample.png 不存在。")
-                text = OpenAIOCR.recognize_image(str(sample), load_config())
+                text = openai_ocr.recognize_image(str(sample), load_config())
                 self.send_json({"ok": True, "text": text})
                 return
             if path == "/api/preview":
-                import frame_sources
+                from .. import frame_sources
 
                 config = load_config()
                 source = str(payload.get("InputSource") or config.get("InputSource") or "0")
@@ -1149,7 +1145,7 @@ class WebUIHandler(BaseHTTPRequestHandler):
                 self.send_json({"ok": True, "dataUrl": read_image_data_url(image_path), "path": str(image_path)})
                 return
             if path == "/api/adb-screenshot":
-                import workflow
+                from .. import workflow
 
                 config = load_config()
                 if "ADBSerial" in payload:
@@ -1173,12 +1169,12 @@ class WebUIHandler(BaseHTTPRequestHandler):
                 config = load_config()
                 method = str(config.get("PageMethod") or "音量下")
                 if method == "模拟点击":
-                    import Click
+                    from .. import click
 
-                    Click.ClickToNextPage()
+                    click.ClickToNextPage()
                     self.send_json({"ok": True, "message": "已执行一次服务器端模拟点击。"})
                     return
-                import adb_controller
+                from .. import adb_controller
 
                 serial = adb_controller.connect(str(config.get("ADBSerial") or ""))
                 if method == "ADB 模拟点击":

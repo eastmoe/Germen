@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Dict
 
-from app_config import PROJECT_ROOT
+from .app_config import PROJECT_ROOT
 
 
 DATA_DIR = PROJECT_ROOT / "data"

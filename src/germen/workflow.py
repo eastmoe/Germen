@@ -7,8 +7,8 @@ from pathlib import Path
 from threading import Event
 from typing import Any, Callable, Dict, Optional
 
-from app_config import PROJECT_ROOT, ensure_project_dirs, load_config, resolve_path
-from log_utils import get_logger
+from .app_config import PROJECT_ROOT, ensure_project_dirs, load_config, resolve_path
+from .log_utils import get_logger
 
 
 logger = get_logger("germen.workflow", "main.log")
@@ -21,8 +21,8 @@ def emit(callback: EventCallback, message: str, **payload: Any) -> None:
         callback(message, payload)
 
 
-def run_helper(script_name: str) -> None:
-    subprocess.run([sys.executable, str(PROJECT_ROOT / script_name)], cwd=PROJECT_ROOT, check=True)
+def run_helper(module_name: str) -> None:
+    subprocess.run([sys.executable, "-m", f"germen.{module_name}"], cwd=PROJECT_ROOT, check=True)
 
 
 def find_latest_file(folder_path: str, file_type: str) -> Optional[str]:
@@ -44,7 +44,7 @@ def random_reading_delay(config: Dict[str, Any]) -> tuple[float, float, float]:
 
 
 def pin_foreground_window(callback: EventCallback = None) -> None:
-    import win_input
+    from . import win_input
 
     win_input.pin_foreground_window()
     emit(callback, "已置顶当前活动窗口。")
@@ -56,8 +56,7 @@ def run_capture(
     callback: EventCallback = None,
     pin_window: bool = False,
 ) -> int:
-    import OpenAIOCR
-    import frame_sources
+    from . import frame_sources, openai_ocr
 
     config = config or load_config()
     ensure_project_dirs(config)
@@ -80,11 +79,11 @@ def run_capture(
     click_module = None
     adb_module = None
     if page_method == "模拟点击":
-        import Click
+        from . import click
 
-        click_module = Click
+        click_module = click
     elif page_method in ("音量下", "音量上", "ADB 模拟点击", "模拟点击学习"):
-        import adb_controller
+        from . import adb_controller
 
         adb_module = adb_controller
         adb_serial = adb_module.connect(adb_serial)
@@ -94,7 +93,7 @@ def run_capture(
             if not str(config.get("ADBTapX") or "").strip() or not str(config.get("ADBTapY") or "").strip():
                 raise RuntimeError("还没有设置 ADB 点击坐标，请先手动填写、学习点击位置或从 ADB 截图点选。")
     else:
-        import win_input
+        from . import win_input
 
     emit(callback, f"采集来源: {capture_source}；翻页方式: {page_method}")
     captured = 0
@@ -107,7 +106,7 @@ def run_capture(
         latest_image = frame_sources.capture_frame(config, picture_dir)
 
         emit(callback, f"正在 OCR: {latest_image}", page=page, total=total_pages)
-        text_path = OpenAIOCR.OCR(str(latest_image), ocr_dir, config)
+        text_path = openai_ocr.OCR(str(latest_image), ocr_dir, config)
         captured += 1
         emit(callback, f"OCR 完成: {text_path}", page=page, total=total_pages, text_path=text_path)
 
@@ -148,7 +147,7 @@ def run_capture(
 
 
 def connect_adb(config: Optional[Dict[str, Any]] = None, callback: EventCallback = None) -> str:
-    import adb_controller
+    from . import adb_controller
 
     config = config or load_config()
     serial = adb_controller.connect(str(config.get("ADBSerial") or ""))
@@ -157,7 +156,7 @@ def connect_adb(config: Optional[Dict[str, Any]] = None, callback: EventCallback
 
 
 def learn_adb_tap(config: Optional[Dict[str, Any]] = None, callback: EventCallback = None) -> Dict[str, int]:
-    import adb_controller
+    from . import adb_controller
 
     config = config or load_config()
     serial = adb_controller.connect(str(config.get("ADBSerial") or ""))
@@ -169,7 +168,7 @@ def learn_adb_tap(config: Optional[Dict[str, Any]] = None, callback: EventCallba
 
 
 def capture_adb_screenshot(config: Optional[Dict[str, Any]] = None, callback: EventCallback = None) -> Dict[str, Any]:
-    import adb_controller
+    from . import adb_controller
     from PIL import Image
 
     config = config or load_config()
@@ -183,7 +182,7 @@ def capture_adb_screenshot(config: Optional[Dict[str, Any]] = None, callback: Ev
 
 
 def list_adb_devices() -> list[Dict[str, str]]:
-    import adb_controller
+    from . import adb_controller
 
     return [
         {
@@ -197,7 +196,7 @@ def list_adb_devices() -> list[Dict[str, str]]:
 
 
 def list_input_source_details(max_index: int = 8) -> list[Dict[str, str]]:
-    import frame_sources
+    from . import frame_sources
 
     return [
         {"id": source.id, "name": source.name, "label": source.label}
@@ -206,13 +205,13 @@ def list_input_source_details(max_index: int = 8) -> list[Dict[str, str]]:
 
 
 def list_input_sources(max_index: int = 8) -> list[str]:
-    import frame_sources
+    from . import frame_sources
 
     return frame_sources.list_input_sources(max_index)
 
 
 def merge_book(config: Optional[Dict[str, Any]] = None, callback: EventCallback = None) -> str:
-    import TextMerge
+    from . import text_merge
 
     config = config or load_config()
     ensure_project_dirs(config)
@@ -220,10 +219,10 @@ def merge_book(config: Optional[Dict[str, Any]] = None, callback: EventCallback 
     ocr_dir = str(config["OCROutPaDir"])
     output_path = merge_dir / f"{time.strftime('%Y-%m-%d-%H-%M-%S')}.txt"
 
-    file_list = TextMerge.GetFileList(str(resolve_path(ocr_dir)))
+    file_list = text_merge.GetFileList(str(resolve_path(ocr_dir)))
     if file_list == "Error":
         raise RuntimeError("OCR 输出目录没有可合并的文本文件。")
-    TextMerge.Merge(file_list, str(resolve_path(ocr_dir)), str(output_path))
+    text_merge.Merge(file_list, str(resolve_path(ocr_dir)), str(output_path))
     emit(callback, f"合并完成: {output_path}", merged_path=str(output_path))
     return str(output_path)
 
@@ -233,14 +232,14 @@ def format_book(
     config: Optional[Dict[str, Any]] = None,
     callback: EventCallback = None,
 ) -> str:
-    import FormatReplace
+    from . import format_replace
 
     config = config or load_config()
     ensure_project_dirs(config)
     final_dir = resolve_path(str(config["FinalNovelDir"]))
     output_path = final_dir / f"{time.strftime('%Y-%m-%d-%H-%M-%S')}.txt"
 
-    FormatReplace.AddSpaceForParagraphs(merged_file, str(output_path))
-    FormatReplace.UpdateFormat(str(output_path))
+    format_replace.AddSpaceForParagraphs(merged_file, str(output_path))
+    format_replace.UpdateFormat(str(output_path))
     emit(callback, f"格式化完成: {output_path}", final_path=str(output_path))
     return str(output_path)

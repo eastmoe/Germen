@@ -1,9 +1,10 @@
 import logging
 from pathlib import Path
 
+from .app_config import PROJECT_ROOT
 
-PROJECT_ROOT = Path(__file__).resolve().parent
 LOG_DIR = PROJECT_ROOT / "log"
+LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def get_logger(name: str, file_name: str) -> logging.Logger:

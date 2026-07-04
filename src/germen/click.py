@@ -1,6 +1,6 @@
 #模拟鼠标点击程序
-from coordinates import load_click_plot
-import win_input
+from . import win_input
+from .coordinates import load_click_plot
 
 
 def ClickToNextPage():
