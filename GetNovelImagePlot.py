@@ -1,9 +1,9 @@
 #获取截图坐标的程序
 import tkinter as tk
-import numpy as np
 import logging
 #from tkinter import messagebox
-#import pyautogui
+
+from coordinates import save_image_plot
 
 # 设置日志
 logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
@@ -78,8 +78,8 @@ def buttonRelease_1(event):
 def savexyplot(x1,y1,x2,y2):
     xyplot={"xstart":x1,"ystart":y1,"xend":x2,"yend":y2}
     print(xyplot)
-    np.save('.//data/ImagePlot.npy', xyplot)
-    logging.info(f"保存截图范围：{x1,y1,x2,y2}至文件.//data/ImagePlot.npy")
+    save_image_plot(x1, y1, x2, y2)
+    logging.info(f"保存截图范围：{x1,y1,x2,y2}至文件.//data/ImagePlot.json")
 
 #退出程序
 def sys_out(even):
@@ -89,7 +89,6 @@ def sys_out(even):
 
 
 #监听鼠标和键盘事件，实时监控框选区域和截屏
-#tk.Canvas.bind("<B1-Motion>",pyautogui.move)   # 鼠标左键移动->显示当前光标位置
 root.bind('<Escape>',sys_out)      # 键盘Esc键->退出
 root.bind("<Button-1>", button_1)  # 鼠标左键点击->显示子窗口
 root.bind("<B1-Motion>", b1_Motion)# 鼠标左键移动->改变子窗口大小

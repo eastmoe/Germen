@@ -1,10 +1,10 @@
 #模拟鼠标点击程序
-import numpy as np
-import pyautogui
+from coordinates import load_click_plot
+import win_input
 
 
 def ClickToNextPage():
-    xyclickplot = np.load('.//data/ClickPlot.npy', allow_pickle=True).item()
+    xyclickplot = load_click_plot()
     # 从文件加载坐标
 
     print(xyclickplot)
@@ -13,7 +13,7 @@ def ClickToNextPage():
     y = xyclickplot.get("y")
     # 将坐标赋予变量
 
-    pyautogui.click(x, y)
+    win_input.click(x, y)
 
     return 0
 

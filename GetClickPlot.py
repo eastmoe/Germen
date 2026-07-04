@@ -1,7 +1,8 @@
 #获取模拟点击坐标的程序
 import tkinter as tk
-import numpy as np
 import logging
+
+from coordinates import save_click_plot
 
 # 设置日志
 logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
@@ -35,8 +36,8 @@ def button_1(event):
 #保存坐标
 def savexyplot(x1,y1):
     xyclickplot={"x":x1,"y":y1}
-    np.save('.//data/ClickPlot.npy', xyclickplot)
-    logging.info(f"保存点击坐标至文件：.//data/ClickPlot.npy")
+    save_click_plot(x1, y1)
+    logging.info(f"保存点击坐标至文件：.//data/ClickPlot.json")
 
 
 #退出程序

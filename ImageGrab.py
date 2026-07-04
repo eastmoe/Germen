@@ -1,9 +1,10 @@
 #截图程序
 from PIL import ImageGrab
-import numpy as np
 import time
 import os
 import logging
+
+from coordinates import load_image_plot
 
 # 设置日志
 logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
@@ -22,7 +23,7 @@ def GrabReadImage(ImageSaveDir):
         logging.error('截图保存路径错误，程序将退出。')
         return "Error"
 
-    xyplot = np.load('.//data/ImagePlot.npy', allow_pickle=True).item()
+    xyplot = load_image_plot()
     # 从文件加载坐标
 
     print(xyplot)

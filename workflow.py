@@ -33,27 +33,9 @@ def find_latest_file(folder_path: str, file_type: str) -> Optional[str]:
 
 
 def pin_foreground_window(callback: EventCallback = None) -> None:
-    try:
-        import win32con
-        import win32gui
-    except ImportError:
-        emit(callback, "未安装 pywin32，跳过窗口置顶。")
-        return
+    import win_input
 
-    handle = win32gui.GetForegroundWindow()
-    win32gui.SetWindowPos(
-        handle,
-        win32con.HWND_TOPMOST,
-        0,
-        0,
-        0,
-        0,
-        win32con.SWP_NOMOVE
-        | win32con.SWP_DRAWFRAME
-        | win32con.SWP_NOSIZE
-        | win32con.SWP_NOOWNERZORDER
-        | win32con.SWP_SHOWWINDOW,
-    )
+    win_input.pin_foreground_window()
     emit(callback, "已置顶当前活动窗口。")
 
 
@@ -83,15 +65,12 @@ def run_capture(
         pin_foreground_window(callback)
 
     click_module = None
-    keyboard_module = None
     if page_method == "模拟点击":
         import Click
 
         click_module = Click
     else:
-        import keyboard
-
-        keyboard_module = keyboard
+        import win_input
 
     captured = 0
     for page in range(1, total_pages + 1):
@@ -118,7 +97,7 @@ def run_capture(
                 click_module.ClickToNextPage()
                 emit(callback, "已执行模拟点击翻页。", page=page, total=total_pages)
             else:
-                keyboard_module.press_and_release(page_key)
+                win_input.press_and_release(page_key)
                 emit(callback, f"已发送翻页按键: {page_key}", page=page, total=total_pages)
 
             end_at = time.time() + cycle
