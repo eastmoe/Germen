@@ -57,7 +57,7 @@ def GrabReadImage(ImageSaveDir):
     im.save(imgpath)
     logging.info(f"截图成功，文件位于{imgpath}")
 
-    return 0
+    return imgpath
 
 
 def TestFeature():

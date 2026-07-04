@@ -45,19 +45,21 @@ def run_capture(
     callback: EventCallback = None,
     pin_window: bool = False,
 ) -> int:
-    import ImageGrab
     import OpenAIOCR
+    import frame_sources
 
     config = config or load_config()
     ensure_project_dirs(config)
     stop_event = stop_event or Event()
 
-    picture_dir = str(config["PictureDir"])
+    picture_dir = resolve_path(str(config["PictureDir"]))
     ocr_dir = str(config["OCROutPaDir"])
     cycle = float(config.get("Cycle") or 10)
     total_pages = int(config.get("CapturePages") or 1)
     page_method = str(config.get("PageMethod") or "模拟按键")
     page_key = str(config.get("PageKey") or "n")
+    capture_source = str(config.get("CaptureSource") or "屏幕区域")
+    adb_serial = str(config.get("ADBSerial") or "").strip()
 
     if pin_window:
         emit(callback, "请在 3 秒内切换到模拟器/阅读器窗口，随后会置顶当前活动窗口。")
@@ -65,13 +67,25 @@ def run_capture(
         pin_foreground_window(callback)
 
     click_module = None
+    adb_module = None
     if page_method == "模拟点击":
         import Click
 
         click_module = Click
+    elif page_method in ("音量下", "模拟点击学习"):
+        import adb_controller
+
+        adb_module = adb_controller
+        adb_serial = adb_module.connect(adb_serial)
+        config["ADBSerial"] = adb_serial
+        emit(callback, f"ADB 已连接: {adb_serial}")
+        if page_method == "模拟点击学习":
+            if not str(config.get("ADBTapX") or "").strip() or not str(config.get("ADBTapY") or "").strip():
+                raise RuntimeError("还没有学习 ADB 点击坐标，请先点击“学习点击位置”。")
     else:
         import win_input
 
+    emit(callback, f"采集来源: {capture_source}；翻页方式: {page_method}")
     captured = 0
     for page in range(1, total_pages + 1):
         if stop_event.is_set():
@@ -79,16 +93,10 @@ def run_capture(
             break
 
         emit(callback, f"开始采集第 {page}/{total_pages} 页。", page=page, total=total_pages)
-        result = ImageGrab.GrabReadImage(picture_dir)
-        if result == "Error":
-            raise RuntimeError("截图失败，请检查截图保存目录和截图区域。")
-
-        latest_image = find_latest_file(picture_dir, "*.png")
-        if not latest_image:
-            raise RuntimeError("没有找到刚刚保存的截图。")
+        latest_image = frame_sources.capture_frame(config, picture_dir)
 
         emit(callback, f"正在 OCR: {latest_image}", page=page, total=total_pages)
-        text_path = OpenAIOCR.OCR(latest_image, ocr_dir, config)
+        text_path = OpenAIOCR.OCR(str(latest_image), ocr_dir, config)
         captured += 1
         emit(callback, f"OCR 完成: {text_path}", page=page, total=total_pages, text_path=text_path)
 
@@ -96,6 +104,12 @@ def run_capture(
             if page_method == "模拟点击":
                 click_module.ClickToNextPage()
                 emit(callback, "已执行模拟点击翻页。", page=page, total=total_pages)
+            elif page_method == "音量下":
+                adb_module.keyevent(adb_serial, "KEYCODE_VOLUME_DOWN")
+                emit(callback, "已发送 ADB 音量下翻页。", page=page, total=total_pages)
+            elif page_method == "模拟点击学习":
+                adb_module.tap(adb_serial, int(config["ADBTapX"]), int(config["ADBTapY"]))
+                emit(callback, f"已执行 ADB 点击翻页: {config['ADBTapX']}, {config['ADBTapY']}", page=page, total=total_pages)
             else:
                 win_input.press_and_release(page_key)
                 emit(callback, f"已发送翻页按键: {page_key}", page=page, total=total_pages)
@@ -108,6 +122,33 @@ def run_capture(
 
     emit(callback, f"采集结束，共完成 {captured} 页。", page=captured, total=total_pages)
     return captured
+
+
+def connect_adb(config: Optional[Dict[str, Any]] = None, callback: EventCallback = None) -> str:
+    import adb_controller
+
+    config = config or load_config()
+    serial = adb_controller.connect(str(config.get("ADBSerial") or ""))
+    emit(callback, f"ADB 已连接: {serial}", adb_serial=serial)
+    return serial
+
+
+def learn_adb_tap(config: Optional[Dict[str, Any]] = None, callback: EventCallback = None) -> Dict[str, int]:
+    import adb_controller
+
+    config = config or load_config()
+    serial = adb_controller.connect(str(config.get("ADBSerial") or ""))
+    timeout = float(config.get("ADBLearnTimeout") or 30)
+    emit(callback, f"ADB 监听已开启，请在 {int(timeout)} 秒内点击手机上的下一页区域。")
+    x, y = adb_controller.learn_tap(serial, timeout)
+    emit(callback, f"已学习 ADB 点击坐标: {x}, {y}", adb_serial=serial, x=x, y=y)
+    return {"x": x, "y": y}
+
+
+def list_input_sources(max_index: int = 8) -> list[str]:
+    import frame_sources
+
+    return frame_sources.list_input_sources(max_index)
 
 
 def merge_book(config: Optional[Dict[str, Any]] = None, callback: EventCallback = None) -> str:

@@ -15,8 +15,8 @@ class GermenGUI(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.title("Germen OCR")
-        self.geometry("760x680")
-        self.minsize(720, 640)
+        self.geometry("900x760")
+        self.minsize(840, 720)
 
         self.config_data = load_config()
         self.queue: queue.Queue = queue.Queue()
@@ -81,48 +81,82 @@ class GermenGUI(tk.Tk):
         for col in range(8):
             capture_frame.columnconfigure(col, weight=1)
 
-        ttk.Label(capture_frame, text="翻页方式").grid(row=0, column=0, sticky="w", padx=8, pady=6)
+        ttk.Label(capture_frame, text="采集来源").grid(row=0, column=0, sticky="w", padx=8, pady=6)
+        source_box = ttk.Combobox(
+            capture_frame,
+            values=("屏幕区域", "图像输入源"),
+            textvariable=self.vars["CaptureSource"],
+            state="readonly",
+            width=12,
+        )
+        source_box.grid(row=0, column=1, sticky="ew", padx=8, pady=6)
+
+        ttk.Label(capture_frame, text="输入源").grid(row=0, column=2, sticky="e", padx=8, pady=6)
+        self.input_source_box = ttk.Combobox(
+            capture_frame,
+            values=(self.vars["InputSource"].get(),),
+            textvariable=self.vars["InputSource"],
+            width=10,
+        )
+        self.input_source_box.grid(row=0, column=3, sticky="ew", padx=8, pady=6)
+
+        ttk.Button(capture_frame, text="扫描输入源", command=self._scan_input_sources).grid(
+            row=0, column=4, sticky="ew", padx=8, pady=6
+        )
+
+        ttk.Label(capture_frame, text="ADB 序列号").grid(row=0, column=5, sticky="e", padx=8, pady=6)
+        ttk.Entry(capture_frame, textvariable=self.vars["ADBSerial"], width=16).grid(
+            row=0, column=6, sticky="ew", padx=8, pady=6
+        )
+        ttk.Button(capture_frame, text="连接 ADB", command=self._connect_adb).grid(
+            row=0, column=7, sticky="ew", padx=8, pady=6
+        )
+
+        ttk.Label(capture_frame, text="翻页方式").grid(row=1, column=0, sticky="w", padx=8, pady=6)
         method_box = ttk.Combobox(
             capture_frame,
-            values=("模拟按键", "模拟点击"),
+            values=("模拟按键", "模拟点击", "音量下", "模拟点击学习"),
             textvariable=self.vars["PageMethod"],
             state="readonly",
             width=12,
         )
-        method_box.grid(row=0, column=1, sticky="ew", padx=8, pady=6)
+        method_box.grid(row=1, column=1, sticky="ew", padx=8, pady=6)
 
-        ttk.Label(capture_frame, text="按键").grid(row=0, column=2, sticky="e", padx=8, pady=6)
+        ttk.Label(capture_frame, text="按键").grid(row=1, column=2, sticky="e", padx=8, pady=6)
         ttk.Entry(capture_frame, textvariable=self.vars["PageKey"], width=10).grid(
-            row=0, column=3, sticky="w", padx=8, pady=6
+            row=1, column=3, sticky="w", padx=8, pady=6
         )
 
-        ttk.Label(capture_frame, text="页数").grid(row=0, column=4, sticky="e", padx=8, pady=6)
+        ttk.Label(capture_frame, text="页数").grid(row=1, column=4, sticky="e", padx=8, pady=6)
         ttk.Entry(capture_frame, textvariable=self.vars["CapturePages"], width=10).grid(
-            row=0, column=5, sticky="w", padx=8, pady=6
+            row=1, column=5, sticky="w", padx=8, pady=6
         )
 
-        ttk.Label(capture_frame, text="周期秒").grid(row=0, column=6, sticky="e", padx=8, pady=6)
+        ttk.Label(capture_frame, text="周期秒").grid(row=1, column=6, sticky="e", padx=8, pady=6)
         ttk.Entry(capture_frame, textvariable=self.vars["Cycle"], width=10).grid(
-            row=0, column=7, sticky="w", padx=8, pady=6
+            row=1, column=7, sticky="w", padx=8, pady=6
         )
 
         ttk.Checkbutton(
             capture_frame,
             text="开始前 3 秒置顶当前活动窗口",
             variable=self.pin_window_var,
-        ).grid(row=1, column=0, columnspan=3, sticky="w", padx=8, pady=6)
+        ).grid(row=2, column=0, columnspan=3, sticky="w", padx=8, pady=6)
 
         ttk.Button(capture_frame, text="选择截图区域", command=self._select_image_area).grid(
-            row=1, column=3, sticky="ew", padx=8, pady=6
+            row=2, column=3, sticky="ew", padx=8, pady=6
         )
         ttk.Button(capture_frame, text="选择点击坐标", command=self._select_click_point).grid(
-            row=1, column=4, sticky="ew", padx=8, pady=6
+            row=2, column=4, sticky="ew", padx=8, pady=6
+        )
+        ttk.Button(capture_frame, text="学习点击位置", command=self._learn_adb_click).grid(
+            row=2, column=5, sticky="ew", padx=8, pady=6
         )
         ttk.Button(capture_frame, text="保存配置", command=self._save_config_from_ui).grid(
-            row=1, column=5, sticky="ew", padx=8, pady=6
+            row=2, column=6, sticky="ew", padx=8, pady=6
         )
         ttk.Button(capture_frame, text="清空 OCR 文本", command=self._clear_ocr_text).grid(
-            row=1, column=6, columnspan=2, sticky="ew", padx=8, pady=6
+            row=2, column=7, sticky="ew", padx=8, pady=6
         )
 
         action_frame = ttk.Frame(self)
@@ -182,6 +216,38 @@ class GermenGUI(tk.Tk):
 
     def _select_click_point(self) -> None:
         self._start_background("选择点击坐标", lambda: workflow.run_helper("GetClickPlot.py"))
+
+    def _scan_input_sources(self) -> None:
+        try:
+            sources = workflow.list_input_sources()
+        except Exception as exc:
+            messagebox.showerror("扫描失败", str(exc))
+            return
+        if not sources:
+            self._log("没有扫描到可读取的图像输入源。")
+            return
+        self.input_source_box.configure(values=sources)
+        if self.vars["InputSource"].get() not in sources:
+            self.vars["InputSource"].set(sources[0])
+        self._log(f"已扫描到图像输入源: {', '.join(sources)}")
+
+    def _connect_adb(self) -> None:
+        config = self._save_config_from_ui()
+
+        def task() -> None:
+            serial = workflow.connect_adb(config, self._worker_callback)
+            self.queue.put(("adb_serial", f"ADB 序列号已保存: {serial}", {"serial": serial}))
+
+        self._start_background("连接 ADB", task)
+
+    def _learn_adb_click(self) -> None:
+        config = self._save_config_from_ui()
+
+        def task() -> None:
+            point = workflow.learn_adb_tap(config, self._worker_callback)
+            self.queue.put(("adb_tap", "ADB 点击坐标已写入配置。", point))
+
+        self._start_background("学习点击位置", task)
 
     def _open_config_file(self) -> None:
         os.startfile("config.json")
@@ -294,6 +360,16 @@ class GermenGUI(tk.Tk):
                 self._log(payload or "")
                 self._set_busy(False)
                 messagebox.showerror("任务失败", message)
+            elif kind == "adb_serial":
+                self.vars["ADBSerial"].set(str(payload["serial"]))
+                self._save_config_from_ui()
+                self._set_busy(False)
+            elif kind == "adb_tap":
+                if payload:
+                    self.vars["ADBTapX"].set(str(payload["x"]))
+                    self.vars["ADBTapY"].set(str(payload["y"]))
+                    self._save_config_from_ui()
+                self._set_busy(False)
             elif kind == "done":
                 self._set_busy(False)
 
