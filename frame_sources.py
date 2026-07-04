@@ -8,7 +8,7 @@ def _timestamped_png(output_dir: Path) -> Path:
     return output_dir / f"{time.strftime('%Y-%m-%d-%H-%M-%S')}.png"
 
 
-def _parse_source(value: str) -> int | str:
+def parse_input_source(value: str) -> int | str:
     value = str(value or "0").strip()
     if value.isdigit():
         return int(value)
@@ -36,7 +36,7 @@ def capture_input_source(output_dir: Path, source: str = "0", warmup_frames: int
     except ImportError as exc:
         raise RuntimeError("使用图像输入源需要安装 opencv-python: pip install opencv-python") from exc
 
-    capture = cv2.VideoCapture(_parse_source(source), cv2.CAP_DSHOW)
+    capture = cv2.VideoCapture(parse_input_source(source), cv2.CAP_DSHOW)
     if not capture.isOpened():
         capture.release()
         raise RuntimeError(f"无法打开图像输入源: {source}")

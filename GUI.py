@@ -23,6 +23,12 @@ class GermenGUI(tk.Tk):
         self.worker: threading.Thread | None = None
         self.stop_event = threading.Event()
         self.last_merged_file = ""
+        self.preview_window = None
+        self.preview_label = None
+        self.preview_capture = None
+        self.preview_photo = None
+        self.preview_after_id = None
+        self.preview_source = ""
 
         self.vars = {
             key: tk.StringVar(value=str(self.config_data.get(key, DEFAULT_CONFIG.get(key, ""))))
@@ -30,6 +36,7 @@ class GermenGUI(tk.Tk):
         }
         self.pin_window_var = tk.BooleanVar(value=False)
 
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
         self._build_ui()
         self._poll_queue()
 
@@ -141,7 +148,11 @@ class GermenGUI(tk.Tk):
             capture_frame,
             text="开始前 3 秒置顶当前活动窗口",
             variable=self.pin_window_var,
-        ).grid(row=2, column=0, columnspan=3, sticky="w", padx=8, pady=6)
+        ).grid(row=2, column=0, columnspan=2, sticky="w", padx=8, pady=6)
+
+        ttk.Button(capture_frame, text="预览输入源", command=self._preview_input_source).grid(
+            row=2, column=2, sticky="ew", padx=8, pady=6
+        )
 
         ttk.Button(capture_frame, text="选择截图区域", command=self._select_image_area).grid(
             row=2, column=3, sticky="ew", padx=8, pady=6
@@ -231,6 +242,81 @@ class GermenGUI(tk.Tk):
             self.vars["InputSource"].set(sources[0])
         self._log(f"已扫描到图像输入源: {', '.join(sources)}")
 
+    def _preview_input_source(self) -> None:
+        source = self.vars["InputSource"].get()
+        if self.preview_window and self.preview_window.winfo_exists():
+            if self.preview_source == source:
+                self.preview_window.lift()
+                return
+            self._close_input_preview()
+
+        try:
+            import cv2
+            import frame_sources
+            from PIL import Image, ImageTk
+        except ImportError as exc:
+            messagebox.showerror("预览失败", f"使用图像输入源预览需要安装 opencv-python 和 pillow: {exc}")
+            return
+
+        capture = cv2.VideoCapture(
+            frame_sources.parse_input_source(source),
+            cv2.CAP_DSHOW,
+        )
+        if not capture.isOpened():
+            capture.release()
+            messagebox.showerror("预览失败", f"无法打开图像输入源: {source}")
+            return
+
+        self.preview_source = source
+        self.preview_capture = capture
+        self.preview_window = tk.Toplevel(self)
+        self.preview_window.title(f"输入源预览 - {source}")
+        self.preview_window.geometry("760x520")
+        self.preview_window.minsize(420, 300)
+        self.preview_window.protocol("WM_DELETE_WINDOW", self._close_input_preview)
+        self.preview_label = ttk.Label(self.preview_window, anchor="center")
+        self.preview_label.pack(fill="both", expand=True, padx=8, pady=8)
+        self._input_preview_image_class = Image
+        self._input_preview_photo_class = ImageTk
+        self._update_input_preview()
+
+    def _update_input_preview(self) -> None:
+        if not self.preview_window or not self.preview_window.winfo_exists() or not self.preview_capture:
+            return
+
+        ok, frame = self.preview_capture.read()
+        if ok:
+            import cv2
+
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            image = self._input_preview_image_class.fromarray(frame)
+            max_width = max(320, self.preview_label.winfo_width() - 16)
+            max_height = max(240, self.preview_label.winfo_height() - 16)
+            image.thumbnail((max_width, max_height))
+            self.preview_photo = self._input_preview_photo_class.PhotoImage(image)
+            self.preview_label.configure(image=self.preview_photo, text="")
+        else:
+            self.preview_label.configure(image="", text="无法读取图像输入源画面")
+
+        self.preview_after_id = self.after(33, self._update_input_preview)
+
+    def _close_input_preview(self) -> None:
+        if self.preview_after_id:
+            try:
+                self.after_cancel(self.preview_after_id)
+            except tk.TclError:
+                pass
+            self.preview_after_id = None
+        if self.preview_capture:
+            self.preview_capture.release()
+            self.preview_capture = None
+        if self.preview_window and self.preview_window.winfo_exists():
+            self.preview_window.destroy()
+        self.preview_window = None
+        self.preview_label = None
+        self.preview_photo = None
+        self.preview_source = ""
+
     def _connect_adb(self) -> None:
         config = self._save_config_from_ui()
 
@@ -263,6 +349,7 @@ class GermenGUI(tk.Tk):
         self._log(f"已删除 {deleted} 个 OCR 文本文件。")
 
     def _start_capture(self) -> None:
+        self._close_input_preview()
         config = self._save_config_from_ui()
         self.stop_event.clear()
         self._start_background(
@@ -305,6 +392,7 @@ class GermenGUI(tk.Tk):
         )
 
     def _start_auto(self) -> None:
+        self._close_input_preview()
         config = self._save_config_from_ui()
         self.stop_event.clear()
 
@@ -386,6 +474,10 @@ class GermenGUI(tk.Tk):
     def _log(self, message: str) -> None:
         self.log_text.insert("end", f"{message}\n")
         self.log_text.see("end")
+
+    def _on_close(self) -> None:
+        self._close_input_preview()
+        self.destroy()
 
 
 if __name__ == "__main__":
