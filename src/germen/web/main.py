@@ -1212,18 +1212,18 @@ class WebUIHandler(BaseHTTPRequestHandler):
             self.send_json({"ok": False, "error": str(exc)}, HTTPStatus.INTERNAL_SERVER_ERROR)
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="启动 Germen WebUI。")
+def parse_args(argv: list[str] | None = None, prog: str | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(prog=prog, description="启动 Germen WebUI。")
     parser.add_argument("--host", default="127.0.0.1", help="监听地址，例如 127.0.0.1、0.0.0.0、::1 或 ::。")
     parser.add_argument("--port", default=7860, type=int, help="监听端口。")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if args.port < 1 or args.port > 65535:
         parser.error("--port 必须在 1 到 65535 之间。")
     return args
 
 
-def main() -> None:
-    args = parse_args()
+def main(argv: list[str] | None = None, prog: str | None = None) -> None:
+    args = parse_args(argv, prog)
     host = str(args.host)
     port = int(args.port)
     family = address_family_for_host(host)

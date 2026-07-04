@@ -9,7 +9,7 @@ def print_event(message, payload):
 def main():
     config = load_config()
     print("Germen 命令行模式将使用 config.json 中的配置执行采集、合并与格式化。")
-    print("更完整的配置与控制请运行: germen-gui")
+    print("更完整的配置与控制请运行: germen ui")
     input("确认截图区域和翻页方式已配置后按回车开始。")
     workflow.run_capture(config, callback=print_event, pin_window=True)
     merged_file = workflow.merge_book(config, print_event)

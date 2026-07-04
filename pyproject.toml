@@ -30,9 +30,7 @@ dev = [
 ]
 
 [project.scripts]
-germen = "germen.main_program:main"
-germen-gui = "germen.gui:main"
-germen-web = "germen.web.main:main"
+germen = "germen.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
