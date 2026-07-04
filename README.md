@@ -104,20 +104,18 @@ WebUI 的配置流程：
 20. `WebUIPassword`：WebUI 访问密码，默认值为 `germen`，请在首次使用前修改。
 
 
-## 当前架构
+## 项目结构
 
+- `src/germen/`：主程序包。
 - `src/germen/gui.py`：推荐 GUI 入口，可配置目录、OpenAI API、截图区域、翻页方式、采集页数，并启动采集/合并/格式化。
+- `src/germen/web/`：WebUI 服务。
 - `src/germen/web/main.py`：浏览器入口，按步骤配置 API、服务器端图像输入源、翻页方式、保存目录，并查看采集进度。
 - `src/germen/openai_ocr.py`：统一 OCR 后端，可走通用 OpenAI 兼容 VLM，也可走专用图片-only OCR 模型。
 - `src/germen/workflow.py`：采集、OCR、翻页、合并、格式化的公共流程，GUI、WebUI 和命令行共用。
 - `src/germen/frame_sources.py`：统一屏幕区域和图像输入源采帧。
 - `src/germen/adb_controller.py`：连接 ADB、发送音量键、截取设备屏幕、监听一次用户触摸并学习点击坐标。
 - `src/germen/main_program.py`：命令行入口，适合已有配置后快速运行。
-
-## 项目结构
-
-- `src/germen/`：主程序包。
-- `src/germen/web/`：WebUI 服务。
 - `data/`：截图区域和点击坐标等运行数据。
 - `static/`：WebUI 测试图片、预览图片等静态文件。
-- `NovelPictures/`、`NovelOCRText/`、`MergeText/`、`FinalBooks/`、`log/`：运行产物目录，默认不提交。
+
+
