@@ -1,6 +1,8 @@
 import base64
+import argparse
 import json
 import secrets
+import socket
 import sys
 import threading
 import time
@@ -680,6 +682,29 @@ def runtime_info() -> Dict[str, Any]:
     }
 
 
+def address_family_for_host(host: str) -> str:
+    return "IPv6" if ":" in str(host) else "IPv4"
+
+
+def build_server_class(host: str) -> type[ThreadingHTTPServer]:
+    if address_family_for_host(host) == "IPv6":
+        class IPv6ThreadingHTTPServer(ThreadingHTTPServer):
+            address_family = socket.AF_INET6
+
+        return IPv6ThreadingHTTPServer
+
+    class IPv4ThreadingHTTPServer(ThreadingHTTPServer):
+        address_family = socket.AF_INET
+
+    return IPv4ThreadingHTTPServer
+
+
+def server_address(host: str, port: int) -> tuple[Any, ...]:
+    if address_family_for_host(host) == "IPv6":
+        return (host, port, 0, 0)
+    return (host, port)
+
+
 def read_image_data_url(path: Path) -> str:
     encoded = base64.b64encode(path.read_bytes()).decode("ascii")
     return f"data:image/png;base64,{encoded}"
@@ -985,12 +1010,26 @@ class WebUIHandler(BaseHTTPRequestHandler):
             self.send_json({"ok": False, "error": str(exc)}, HTTPStatus.INTERNAL_SERVER_ERROR)
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="启动 Germen WebUI。")
+    parser.add_argument("--host", default="127.0.0.1", help="监听地址，例如 127.0.0.1、0.0.0.0、::1 或 ::。")
+    parser.add_argument("--port", default=7860, type=int, help="监听端口。")
+    args = parser.parse_args()
+    if args.port < 1 or args.port > 65535:
+        parser.error("--port 必须在 1 到 65535 之间。")
+    return args
+
+
 def main() -> None:
-    config = load_config()
-    host = str(config.get("WebUIHost") or DEFAULT_CONFIG["WebUIHost"])
-    port = int(config.get("WebUIPort") or DEFAULT_CONFIG["WebUIPort"])
-    server = ThreadingHTTPServer((host, port), WebUIHandler)
-    print(f"Germen WebUI: http://{host}:{port}/")
+    args = parse_args()
+    host = str(args.host)
+    port = int(args.port)
+    family = address_family_for_host(host)
+    server_class = build_server_class(host)
+    server = server_class(server_address(host, port), WebUIHandler)
+    display_host = f"[{host}]" if family == "IPv6" and not host.startswith("[") else host
+    print(f"Germen WebUI: http://{display_host}:{port}/")
+    print(f"监听协议: {family}")
     print("访问密码在 config.json 的 WebUIPassword 中设置。")
     try:
         server.serve_forever()
