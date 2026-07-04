@@ -1,4 +1,5 @@
 import time
+import sys
 from pathlib import Path
 from typing import Any, Dict
 
@@ -13,6 +14,16 @@ def parse_input_source(value: str) -> int | str:
     if value.isdigit():
         return int(value)
     return value
+
+
+def _opencv_import_error(action: str, exc: Exception) -> RuntimeError:
+    python_path = sys.executable
+    return RuntimeError(
+        f"{action}需要 OpenCV，但当前 WebUI 使用的 Python 无法导入 cv2。\n"
+        f"当前 Python: {python_path}\n"
+        f"原始错误: {type(exc).__name__}: {exc}\n"
+        f"请用已安装 OpenCV 的环境启动 WebUI，或执行: \"{python_path}\" -m pip install opencv-python"
+    )
 
 
 def capture_desktop_region(output_dir: Path) -> Path:
@@ -33,8 +44,8 @@ def capture_desktop_region(output_dir: Path) -> Path:
 def capture_input_source(output_dir: Path, source: str = "0", warmup_frames: int = 5) -> Path:
     try:
         import cv2
-    except ImportError as exc:
-        raise RuntimeError("使用图像输入源需要安装 opencv-python: pip install opencv-python") from exc
+    except Exception as exc:
+        raise _opencv_import_error("使用图像输入源", exc) from exc
 
     capture = cv2.VideoCapture(parse_input_source(source), cv2.CAP_DSHOW)
     if not capture.isOpened():
@@ -72,8 +83,8 @@ def capture_frame(config: Dict[str, Any], output_dir: Path) -> Path:
 def list_input_sources(max_index: int = 8) -> list[str]:
     try:
         import cv2
-    except ImportError as exc:
-        raise RuntimeError("扫描图像输入源需要安装 opencv-python: pip install opencv-python") from exc
+    except Exception as exc:
+        raise _opencv_import_error("扫描图像输入源", exc) from exc
 
     sources: list[str] = []
     for index in range(max(1, int(max_index))):

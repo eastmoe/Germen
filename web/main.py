@@ -271,6 +271,7 @@ INDEX_HTML = r"""<!doctype html>
         <button id="previewBtn" class="secondary">预览</button>
         <button data-save="input">保存输入源</button>
       </div>
+      <div id="runtimeInfo" class="result"></div>
       <div id="sourceList" class="result hidden"></div>
       <div class="preview hidden" id="previewBox">
         <img id="previewImage" alt="图像输入源预览">
@@ -403,7 +404,24 @@ INDEX_HTML = r"""<!doctype html>
       $("apiKeyState").value = data.apiKeySet ? "已配置" : "未配置";
       $("ClickX").value = data.clickPlot?.x ?? "";
       $("ClickY").value = data.clickPlot?.y ?? "";
+      renderRuntime(data.runtime);
       updatePageFields();
+    }
+
+    function renderRuntime(runtime) {
+      if (!runtime) return;
+      const opencv = runtime.opencv || {};
+      const lines = [
+        `WebUI Python: ${runtime.python}`,
+        `Python 版本: ${runtime.pythonVersion}`,
+        opencv.ok
+          ? `OpenCV: ${opencv.version} (${opencv.file})`
+          : `OpenCV: 无法导入 cv2 - ${opencv.error}`,
+        opencv.packageVersion ? `opencv-python 包版本: ${opencv.packageVersion}` : "",
+        opencv.headlessPackageVersion ? `opencv-python-headless 包版本: ${opencv.headlessPackageVersion}` : ""
+      ].filter(Boolean);
+      $("runtimeInfo").textContent = lines.join("\n");
+      $("runtimeInfo").classList.toggle("error", !opencv.ok);
     }
 
     async function loadConfig() {
@@ -619,6 +637,46 @@ def public_config() -> Dict[str, Any]:
         "config": hidden,
         "apiKeySet": bool(str(config.get("OpenAIAPIKEY") or "").strip()),
         "clickPlot": click_plot,
+        "runtime": runtime_info(),
+    }
+
+
+def package_version(package_name: str) -> str:
+    try:
+        from importlib.metadata import version
+
+        return version(package_name)
+    except Exception:
+        return ""
+
+
+def runtime_info() -> Dict[str, Any]:
+    opencv: Dict[str, Any] = {
+        "ok": False,
+        "version": "",
+        "file": "",
+        "error": "",
+        "packageVersion": package_version("opencv-python"),
+        "headlessPackageVersion": package_version("opencv-python-headless"),
+    }
+    try:
+        import cv2
+
+        opencv.update(
+            {
+                "ok": True,
+                "version": getattr(cv2, "__version__", ""),
+                "file": getattr(cv2, "__file__", ""),
+                "error": "",
+            }
+        )
+    except Exception as exc:
+        opencv["error"] = f"{type(exc).__name__}: {exc}"
+
+    return {
+        "python": sys.executable,
+        "pythonVersion": sys.version.split()[0],
+        "opencv": opencv,
     }
 
 

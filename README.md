@@ -71,6 +71,7 @@ python web\main.py
 ```
 
 默认访问地址为 `http://127.0.0.1:7860/`，默认密码在 `config.json` 的 `WebUIPassword` 字段中设置。WebUI 只支持服务器端图像输入源采集，不支持远程上传图片作为输入源，也不使用屏幕区域截图。
+如果预览或扫描输入源提示缺少 OpenCV，请以启动 WebUI 的同一个 Python 为准检查环境：`python -c "import sys; print(sys.executable); import cv2; print(cv2.__version__)"`。需要安装时也使用同一个解释器执行：`python -m pip install opencv-python`。
 
 WebUI 的配置流程：
 
