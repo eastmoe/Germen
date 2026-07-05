@@ -1,9 +1,10 @@
 import ctypes
+import os
 import time
 from ctypes import wintypes
 
 
-user32 = ctypes.WinDLL("user32", use_last_error=True)
+user32 = ctypes.WinDLL("user32", use_last_error=True) if os.name == "nt" else None
 
 HWND_TOPMOST = -1
 SWP_NOSIZE = 0x0001
@@ -58,20 +59,28 @@ def _raise_last_error(action: str) -> None:
         raise OSError(error, f"{action} 失败")
 
 
+def _require_user32():
+    if user32 is None:
+        raise RuntimeError("Windows 鼠标/键盘模拟只支持 Windows；请改用 ADB 翻页方式。")
+    return user32
+
+
 def click(x: int, y: int) -> None:
-    if not user32.SetCursorPos(int(x), int(y)):
+    api = _require_user32()
+    if not api.SetCursorPos(int(x), int(y)):
         _raise_last_error("设置鼠标位置")
     time.sleep(0.03)
-    user32.mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
+    api.mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
     time.sleep(0.05)
-    user32.mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+    api.mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
 
 
 def pin_foreground_window() -> None:
-    handle = user32.GetForegroundWindow()
+    api = _require_user32()
+    handle = api.GetForegroundWindow()
     if not handle:
         _raise_last_error("获取当前活动窗口")
-    result = user32.SetWindowPos(
+    result = api.SetWindowPos(
         handle,
         HWND_TOPMOST,
         0,
@@ -85,7 +94,7 @@ def pin_foreground_window() -> None:
 
 
 def _key_event(vk_code: int, flags: int = 0) -> None:
-    user32.keybd_event(wintypes.BYTE(vk_code), wintypes.BYTE(0), wintypes.DWORD(flags), 0)
+    _require_user32().keybd_event(wintypes.BYTE(vk_code), wintypes.BYTE(0), wintypes.DWORD(flags), 0)
 
 
 def _press_vk(vk_code: int) -> None:
@@ -101,7 +110,7 @@ def _vk_from_token(token: str) -> tuple[int, bool, bool, bool]:
     if len(token) != 1:
         raise ValueError(f"不支持的按键名称: {token}")
 
-    result = user32.VkKeyScanW(token)
+    result = _require_user32().VkKeyScanW(token)
     if result == -1:
         raise ValueError(f"无法映射按键: {token}")
     vk_code = result & 0xFF

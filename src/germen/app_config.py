@@ -4,9 +4,6 @@ from pathlib import Path
 from typing import Any, Dict
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-CONFIG_PATH = PROJECT_ROOT / "config.json"
-
 DEFAULT_CONFIG: Dict[str, Any] = {
     "PictureDir": "./NovelPictures/",
     "OCROutPaDir": "./NovelOCRText/",
@@ -40,6 +37,22 @@ DEFAULT_CONFIG: Dict[str, Any] = {
 }
 
 
+def _resolve_project_root() -> Path:
+    env_root = os.environ.get("GERMEN_HOME")
+    if env_root:
+        return Path(os.path.expandvars(os.path.expanduser(env_root))).resolve()
+
+    source_root = Path(__file__).resolve().parents[2]
+    if (source_root / "pyproject.toml").exists() and (source_root / "src" / "germen").is_dir():
+        return source_root
+
+    return Path.cwd().resolve()
+
+
+PROJECT_ROOT = _resolve_project_root()
+CONFIG_PATH = PROJECT_ROOT / "config.json"
+
+
 def load_config(path: Path = CONFIG_PATH) -> Dict[str, Any]:
     if not path.exists():
         save_config(DEFAULT_CONFIG, path)
@@ -62,6 +75,7 @@ def load_config(path: Path = CONFIG_PATH) -> Dict[str, Any]:
 def save_config(config: Dict[str, Any], path: Path = CONFIG_PATH) -> None:
     merged = dict(DEFAULT_CONFIG)
     merged.update(config)
+    path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as config_file:
         json.dump(merged, config_file, indent=4, ensure_ascii=False)
         config_file.write("\n")
