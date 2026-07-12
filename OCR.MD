@@ -72,7 +72,7 @@ baidu.Unlimited-OCR.Q8_0.gguf
 mmproj-baidu.Unlimited-OCR.f16.gguf
 ```
 
-同样点击文件名或右边的“下载”按钮。
+同样点击右边的“下载”按钮。
 
 这个文件不能省略。没有它，程序就不能正常读取图片。
 
