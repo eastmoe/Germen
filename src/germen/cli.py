@@ -14,13 +14,13 @@ from pathlib import Path
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="germen",
-        description="Germen command launcher. Run without a subcommand to start the CLI workflow.",
+        description="Germen command launcher. Run without a subcommand to open the desktop setup wizard.",
     )
     parser.add_argument(
         "command",
         nargs="?",
         choices=("cli", "ui", "gui", "web"),
-        help="Subcommand: cli, ui, or web. Omit to run cli.",
+        help="Subcommand: cli, ui, or web. Omit to open the desktop wizard.",
     )
     parser.add_argument(
         "--admin",
@@ -90,7 +90,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         web_main(args[1:], prog="germen web")
         return
 
-    if command in ("ui", "gui"):
+    if command in ("ui", "gui") or (command is None and not args):
         if len(args) > 1:
             build_parser().error("ui 不接受额外参数。")
         from .gui import main as gui_main
@@ -98,15 +98,17 @@ def main(argv: Sequence[str] | None = None) -> None:
         gui_main()
         return
 
-    if command in (None, "cli"):
-        if command == "cli":
-            args = args[1:]
+    if command == "cli":
+        args = args[1:]
         if args:
             build_parser().error(f"未知参数: {' '.join(args)}")
         from .main_program import main as cli_main
 
         cli_main()
         return
+
+    if command is None and args:
+        build_parser().error(f"未知参数: {' '.join(args)}")
 
     build_parser().error(f"未知命令: {command}")
 

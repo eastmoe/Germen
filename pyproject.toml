@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "germen"
-version = "0.2.4"
+version = "0.2.5"
 description = "Personal Android novel OCR extraction tool."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -26,3 +26,6 @@ germen = "germen.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.data-files]
+static = ["static/logo.png", "static/sample.png"]

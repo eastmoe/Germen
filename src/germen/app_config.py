@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Any, Dict
 
@@ -51,6 +52,22 @@ def _resolve_project_root() -> Path:
 
 PROJECT_ROOT = _resolve_project_root()
 CONFIG_PATH = PROJECT_ROOT / "config.json"
+
+
+def resource_path(relative: str | Path) -> Path:
+    """Resolve a read-only bundled asset while keeping runtime data under PROJECT_ROOT."""
+    relative_path = Path(relative)
+    project_asset = PROJECT_ROOT / relative_path
+    if project_asset.exists():
+        return project_asset.resolve()
+
+    bundle_root = getattr(sys, "_MEIPASS", None)
+    if bundle_root:
+        return (Path(bundle_root) / relative_path).resolve()
+    installed_asset = Path(sys.prefix) / relative_path
+    if installed_asset.exists():
+        return installed_asset.resolve()
+    return project_asset.resolve()
 
 
 def load_config(path: Path = CONFIG_PATH) -> Dict[str, Any]:

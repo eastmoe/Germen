@@ -14,7 +14,7 @@
     "OpenAIMaxOutputTokens": "4096",
     "OpenAIOCRPrompt": "",
     "DedicatedOCRStripCoordinates": "true",
-    "CaptureSource": "图像输入源",
+    "CaptureSource": "屏幕区域",
     "InputSource": "0",
     "InputSourceWarmupFrames": "5",
     "ADBSerial": "",

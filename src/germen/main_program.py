@@ -2,14 +2,35 @@ from . import workflow
 from .app_config import load_config
 
 
+CLI_BANNER = r"""
+                 /\
+                /  \
+               / /\ \
+              / /  \ \
+             / / /\ \ \
+            /_/ /  \ \_\
+               / /\ \
+              /_/  \_\
+                 ||
+                 ||
+          G  E  R  M  E  N
+""".strip("\n")
+
+
+def print_banner() -> None:
+    print(CLI_BANNER)
+    print()
+
+
 def print_event(message, payload):
     print(message)
 
 
 def main():
+    print_banner()
     config = load_config()
     print("Germen 命令行模式将使用 config.json 中的配置执行采集、合并与格式化。")
-    print("更完整的配置与控制请运行: germen ui")
+    print("更完整的配置与控制请运行: germen")
     input("确认截图区域和翻页方式已配置后按回车开始。")
     workflow.run_capture(config, callback=print_event, pin_window=True)
     merged_file = workflow.merge_book(config, print_event)

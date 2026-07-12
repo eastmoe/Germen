@@ -14,7 +14,7 @@ from typing import Any, Dict, Optional
 from urllib.parse import unquote, urlparse
 
 
-from ..app_config import DEFAULT_CONFIG, PROJECT_ROOT, ensure_project_dirs, load_config, save_config
+from ..app_config import DEFAULT_CONFIG, PROJECT_ROOT, ensure_project_dirs, load_config, resource_path, save_config
 from ..coordinates import save_click_plot
 
 
@@ -45,6 +45,8 @@ INDEX_HTML = r"""<!doctype html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/static/logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="/static/logo.png">
   <title>Germen WebUI</title>
   <style>
     :root {
@@ -1080,9 +1082,9 @@ class WebUIHandler(BaseHTTPRequestHandler):
 
     def serve_static(self, path: str) -> None:
         relative = unquote(path.removeprefix("/static/"))
-        target = (PROJECT_ROOT / "static" / relative).resolve()
-        static_root = (PROJECT_ROOT / "static").resolve()
-        if not str(target).startswith(str(static_root)) or not target.exists() or not target.is_file():
+        target = resource_path(Path("static") / relative)
+        static_root = resource_path("static")
+        if not target.is_relative_to(static_root) or not target.exists() or not target.is_file():
             self.send_json({"ok": False, "error": "Not found"}, HTTPStatus.NOT_FOUND)
             return
         content_type = "image/png" if target.suffix.lower() == ".png" else "application/octet-stream"
@@ -1128,7 +1130,7 @@ class WebUIHandler(BaseHTTPRequestHandler):
             if path == "/api/test-api":
                 from .. import openai_ocr
 
-                sample = PROJECT_ROOT / "static" / "sample.png"
+                sample = resource_path("static/sample.png")
                 if not sample.exists():
                     raise FileNotFoundError("static\\sample.png 不存在。")
                 text = openai_ocr.recognize_image(str(sample), load_config())

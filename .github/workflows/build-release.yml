@@ -102,7 +102,7 @@ jobs:
 
       - name: Build standalone executable
         run: |
-          python -m PyInstaller --noconfirm --clean --onefile --name germen --collect-all cv2 scripts/pyinstaller_entry.py
+          python -m PyInstaller --noconfirm --clean --onefile --name germen --icon static/logo.ico --add-data "static/logo.png;static" --add-data "static/sample.png;static" --collect-all cv2 scripts/pyinstaller_entry.py
 
       - name: Smoke test executable without Python
         shell: pwsh

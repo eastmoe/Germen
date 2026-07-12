@@ -1,15 +1,26 @@
-# Germen
+<p align="center">
+  <img src="static/logo.png" alt="Germen Logo" width="180">
+</p>
+
+<h1 align="center">Germen</h1>
 
 Germen 是一个个人向安卓阅读 App 小说提取工具：按固定区域或图像输入源采集页面，使用通用 VLM 或专用 OCR 模型进行图片 OCR，自动翻页，并把 OCR 文本合并、整理成最终小说文本。
 
 ## 使用方法（快速）
 
+1. 安装任意安卓模拟器（或adb）。
+2. 从[发行页面](https://github.com/eastmoe/Germen/releases)下载exe，然后用打开它（推荐管理员权限）
+3. 启动安卓模拟器并打开小说app（或将手机以adb调试连接至电脑，并将手机屏幕对准摄像头或使用采集卡）。
+4. 按照说明执行 Germen 桌面向导：
+
+## 使用方法（Python）
+
 1. 安装python与任意安卓模拟器（或adb）。
 2. 从[发行页面](https://github.com/eastmoe/Germen/releases)下载whl，然后安装它。
 3. 启动安卓模拟器（或将手机以adb调试连接至电脑，并将手机屏幕对准摄像头或使用采集卡）。
-4. 运行下面的命令启动Germen：
+4. 运行下面的命令直接打开 Germen 桌面向导：
 ```
-germen ui --admin
+germen --admin
 ```
 或启动WebUI以无头服务器模式运行：
 ```
@@ -25,32 +36,40 @@ germen web
 python -m pip install -e .
 ```
 
-3. 运行命令行采集流程：
+3. 默认打开桌面向导：
 
 ```powershell
 germen
 germen --admin
 ```
 
-4. 运行 GUI：
+4. 明确运行命令行采集流程：
+
+```powershell
+germen cli
+germen cli --admin
+```
+
+5. `germen ui` 和 `germen gui` 仍作为桌面向导的兼容别名：
 
 ```powershell
 germen ui
 germen ui --admin
 ```
 
-5. 在 GUI 中选择 OCR 路径，配置 OpenAI 兼容 API、模型、截图目录和输出目录；两条路径共用同一组 URL、Key 和模型字段。
-6. 选择采集来源：
-   - `屏幕区域`：点击“选择截图区域”，框选小说正文区域。
-   - `图像输入源`：点击“扫描输入源”选择本地设备编号，或直接填写 HTTP/HTTPS/RTSP/RTMP 网络视频地址（例如 `http://192.168.1.2:8080/cam.mjpg`），再点击“预览输入源”确认画面。
-7. 连接真实安卓设备时，点击“连接 ADB”。如果只接入一台已授权设备，序列号可以留空。
-8. 选择翻页方式：
+6. GUI 会从首页进入五步向导。首先选择实际使用方式：
+   - `电脑 + 安卓模拟器`：自动使用屏幕区域采集，只显示键盘或电脑鼠标翻页设置，不显示视频源和 ADB。
+   - `摄像头/采集卡/网络视频 + ADB 设备`：自动使用图像输入源，只显示视频和 ADB 设置。
+   - `自定义组合`：保留全部采集来源和翻页方式，适合高级用法。
+7. 按向导依次设置 OCR 服务、采集与翻页、任务页数和保存目录。OCR 页面可点击“测试 OCR 服务”，使用内置的 `static\sample.png` 验证当前地址、Key 和模型；每个配置右侧都有可点击的 `?`，用于查看用途、推荐值和影响。
+8. 图像输入源可扫描本地设备编号，或直接填写 HTTP/HTTPS/RTSP/RTMP 网络视频地址（例如 `http://192.168.1.2:8080/cam.mjpg`），再点击“预览”确认画面。
+9. 向导会根据设备方式筛选翻页选项：
    - `模拟按键`：先在模拟器中配置键盘映射，再填入按键。
    - `模拟点击`：点击“选择点击坐标”，选择翻页点击位置。
    - `音量下` / `音量上`：通过 ADB 发送音量键翻页。
    - `ADB 模拟点击`：可以手动填写 ADB 点击 X/Y，点击“学习点击位置”后在手机上触摸一次，或点击“ADB 截图点选”截取手机当前屏幕并在图片上点选坐标。
    - `模拟点击学习`：兼容旧配置，内部仍使用 ADB 点击坐标翻页。
-9. 点击“开始采集”或“一键采集并生成”。
+10. 在最后一步点击“只采集 OCR”或“一键采集并生成”；已有配置也可以从首页直接进入运行页。
 
 ## WebUI
 
@@ -71,7 +90,7 @@ germen web --admin --host 0.0.0.0 --port 7860
 
 默认访问地址为 `http://127.0.0.1:7860/`，默认密码在 `config.json` 的 `WebUIPassword` 字段中设置。WebUI 只支持服务器端图像输入源采集，不支持远程上传图片作为输入源，也不使用屏幕区域截图。
 
-Windows 用户也可以从发行页面下载单文件 `germen.exe`，无需安装 Python。用法与 Python 命令一致，例如 `germen.exe ui`、`germen.exe web`；配置文件和输出目录默认创建在启动 EXE 时的当前目录。
+Windows 用户也可以从发行页面下载单文件 `germen.exe`，无需安装 Python。`germen.exe` 默认打开桌面向导，`germen.exe cli` 运行命令行流程，`germen.exe web` 启动 WebUI；配置文件和输出目录默认创建在启动 EXE 时的当前目录。
 
 WebUI 的配置流程：
 
