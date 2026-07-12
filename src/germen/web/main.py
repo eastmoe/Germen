@@ -266,9 +266,9 @@ INDEX_HTML = r"""<!doctype html>
 
     <section class="panel step-panel hidden" data-step="1">
       <h2>2. 图像输入源</h2>
-      <p class="hint">WebUI 只使用服务器端的图像输入源，不使用远程浏览器上传图片，也不使用屏幕区域截图。</p>
+      <p class="hint">可填写服务器本地设备 ID，或 HTTP/HTTPS/RTSP/RTMP 网络视频地址（例如 http://192.168.1.2:8080/cam.mjpg）。不使用远程浏览器上传图片，也不使用屏幕区域截图。</p>
       <div class="grid three">
-        <div class="field"><label>输入源名称或 ID</label><input id="InputSource" list="sourceOptions"><datalist id="sourceOptions"></datalist></div>
+        <div class="field"><label>输入源名称、ID 或网络地址</label><input id="InputSource" list="sourceOptions" placeholder="0 或 http://192.168.1.2:8080/cam.mjpg"><datalist id="sourceOptions"></datalist></div>
         <div class="field"><label>预热帧数</label><input id="InputSourceWarmupFrames" inputmode="numeric"></div>
         <div class="field"><label>扫描范围</label><input id="scanMax" value="8" inputmode="numeric"></div>
       </div>

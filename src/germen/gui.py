@@ -117,7 +117,7 @@ class GermenGUI(tk.Tk):
         )
         source_box.grid(row=0, column=1, sticky="ew", padx=8, pady=6)
 
-        ttk.Label(capture_frame, text="输入源").grid(row=0, column=2, sticky="e", padx=8, pady=6)
+        ttk.Label(capture_frame, text="输入源 ID / 网络地址").grid(row=0, column=2, sticky="e", padx=8, pady=6)
         self.input_source_box = ttk.Combobox(
             capture_frame,
             values=(self.vars["InputSource"].get(),),
@@ -398,10 +398,7 @@ class GermenGUI(tk.Tk):
             messagebox.showerror("预览失败", f"使用图像输入源预览需要安装 opencv-python 和 pillow: {exc}")
             return
 
-        capture = cv2.VideoCapture(
-            frame_sources.parse_input_source(source),
-            cv2.CAP_DSHOW,
-        )
+        capture = frame_sources.open_input_source(source)
         if not capture.isOpened():
             capture.release()
             messagebox.showerror("预览失败", f"无法打开图像输入源: {source}")

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "germen"
-version = "0.2.3"
+version = "0.2.4"
 description = "Personal Android novel OCR extraction tool."
 readme = "README.md"
 requires-python = ">=3.10"

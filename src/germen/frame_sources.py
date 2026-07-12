@@ -33,6 +33,19 @@ def parse_input_source(value: str) -> int | str:
     return value
 
 
+def open_input_source(source: str):
+    """Open a local camera ID or a network video/MJPEG URL with OpenCV."""
+    try:
+        import cv2
+    except Exception as exc:
+        raise _opencv_import_error("使用图像输入源", exc) from exc
+
+    parsed_source = parse_input_source(source)
+    if isinstance(parsed_source, int) and sys.platform.startswith("win"):
+        return cv2.VideoCapture(parsed_source, cv2.CAP_DSHOW)
+    return cv2.VideoCapture(parsed_source)
+
+
 def _opencv_import_error(action: str, exc: Exception) -> RuntimeError:
     python_path = sys.executable
     return RuntimeError(
@@ -64,7 +77,7 @@ def capture_input_source(output_dir: Path, source: str = "0", warmup_frames: int
     except Exception as exc:
         raise _opencv_import_error("使用图像输入源", exc) from exc
 
-    capture = cv2.VideoCapture(parse_input_source(source), cv2.CAP_DSHOW)
+    capture = open_input_source(source)
     if not capture.isOpened():
         capture.release()
         raise RuntimeError(f"无法打开图像输入源: {source}")
@@ -150,7 +163,7 @@ def list_input_source_details(max_index: int = 8) -> list[InputSourceInfo]:
     names = _windows_video_device_names()
     sources: list[InputSourceInfo] = []
     for index in range(max(1, int(max_index))):
-        capture = cv2.VideoCapture(index, cv2.CAP_DSHOW)
+        capture = open_input_source(str(index))
         try:
             if capture.isOpened():
                 ok, _ = capture.read()
